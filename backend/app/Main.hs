@@ -1,10 +1,11 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Main where
 
 import Network.Wai.Handler.Warp (run)
-import Network.Wai.Middleware.Cors (simpleCors)
+import Network.Wai.Middleware.Cors (cors, simpleCorsResourcePolicy, CorsResourcePolicy(..))
 import Servant
 
 import Api (API, apiProxy)
@@ -18,6 +19,13 @@ import Db.Migration (runMigrations)
 import Database.Persist.Postgresql (ConnectionPool)
 import Data.Text (Text)
 
+corsPolicy :: CorsResourcePolicy
+corsPolicy = simpleCorsResourcePolicy
+  { corsOrigins = Nothing  -- allow all origins
+  , corsMethods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+  , corsRequestHeaders = ["Authorization", "Content-Type"]
+  }
+
 server :: AppConfig -> ConnectionPool -> Server API
 server config pool =
   authHandlers config pool
@@ -25,7 +33,7 @@ server config pool =
   :<|> publicHandlers pool
 
 app :: AppConfig -> ConnectionPool -> Application
-app config pool = simpleCors $ serve apiProxy (server config pool)
+app config pool = cors (const $ Just corsPolicy) $ serve apiProxy (server config pool)
 
 main :: IO ()
 main = do
