@@ -8,6 +8,9 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode
+import Page.Groups
+import Page.MyData
+import Page.Public
 import Types exposing (..)
 import Url
 import Url.Parser as Parser exposing ((</>))
@@ -416,8 +419,8 @@ view model =
                 ]
             , div [ class "content" ]
                 [ case model.page of
-                    PublicPage _ ->
-                        text "Public page (TODO)"
+                    PublicPage publicModel ->
+                        Page.Public.view publicModel
 
                     LoginPage loginModel ->
                         Auth.viewLogin loginModel
@@ -425,11 +428,11 @@ view model =
                     RegisterPage registerModel ->
                         Auth.viewRegister registerModel
 
-                    MyDataPage _ ->
-                        text "My Data page (TODO)"
+                    MyDataPage myDataModel ->
+                        Page.MyData.view myDataModel
 
-                    GroupsPage _ ->
-                        text "Groups page (TODO)"
+                    GroupsPage groupsModel ->
+                        Page.Groups.view groupsModel
 
                     NotFoundPage ->
                         text "Page not found"
