@@ -1,0 +1,23 @@
+# Backend (Haskell/Stack)
+backend/.stack-work/
+backend/*.cabal
+*.hi
+*.o
+
+# Frontend (Elm)
+frontend/elm-stuff/
+frontend/elm.js
+
+# Editor
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
