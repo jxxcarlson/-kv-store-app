@@ -1,0 +1,11 @@
+resolver: lts-22.43
+packages:
+  - .
+
+extra-path:
+  - /opt/homebrew/opt/libpq/bin
+
+extra-include-dirs:
+  - /opt/homebrew/opt/libpq/include
+extra-lib-dirs:
+  - /opt/homebrew/opt/libpq/lib

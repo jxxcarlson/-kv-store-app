@@ -1,0 +1,46 @@
+name: kv-store-backend
+version: 0.1.0.0
+
+dependencies:
+  - base >= 4.7 && < 5
+  - aeson
+  - bcrypt
+  - bytestring
+  - esqueleto
+  - jose
+  - lens
+  - monad-logger
+  - mtl
+  - persistent
+  - persistent-postgresql
+  - resource-pool
+  - servant
+  - servant-server
+  - text
+  - time
+  - transformers
+  - uuid
+  - wai
+  - wai-cors
+  - warp
+
+library:
+  source-dirs: src
+
+executables:
+  kv-store-backend:
+    main: Main.hs
+    source-dirs: app
+    dependencies:
+      - kv-store-backend
+
+tests:
+  kv-store-backend-test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+      - kv-store-backend
+      - hspec
+      - hspec-wai
+      - servant-client
+      - http-client
