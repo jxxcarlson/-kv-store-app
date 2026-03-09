@@ -140,6 +140,8 @@ type Msg
     | GotCreateResponse (Result Http.Error DataEntrySummary)
     | DeleteEntry String
     | GotDeleteResponse (Result Http.Error ())
+    | MakePublic String
+    | GotMakePublicResponse (Result Http.Error ())
       -- Groups
     | GotGroups (Result Http.Error (List GroupInfo))
 

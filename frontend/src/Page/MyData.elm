@@ -120,7 +120,10 @@ viewEntryRow entry =
         , td [] [ text entry.createdAt ]
         , td [] [ text entry.modifiedAt ]
         , td []
-            [ button [ class "btn btn-danger", onClick (DeleteEntry entry.key) ]
+            [ button [ class "btn", onClick (MakePublic entry.key) ]
+                [ text "Make Public" ]
+            , text " "
+            , button [ class "btn btn-danger", onClick (DeleteEntry entry.key) ]
                 [ text "Delete" ]
             ]
         ]

@@ -185,6 +185,19 @@ deleteDataEntry token key =
         }
 
 
+assignToPublicGroup : String -> String -> Cmd Msg
+assignToPublicGroup token key =
+    Http.request
+        { method = "PUT"
+        , headers = [ authHeader token ]
+        , url = apiBase ++ "/api/data/" ++ key ++ "/group"
+        , body = Http.jsonBody (E.object [ ( "agrGroupId", E.int 1 ) ])
+        , expect = Http.expectWhatever GotMakePublicResponse
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
 fetchGroups : String -> Cmd Msg
 fetchGroups token =
     Http.request

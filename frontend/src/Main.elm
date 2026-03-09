@@ -378,6 +378,27 @@ update msg model =
                 Err _ ->
                     ( { model | errorMessage = Just "Failed to delete entry." }, Cmd.none )
 
+        MakePublic key ->
+            case model.token of
+                Just token ->
+                    ( model, Api.assignToPublicGroup token key )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        GotMakePublicResponse result ->
+            case result of
+                Ok _ ->
+                    case ( model.page, model.token ) of
+                        ( MyDataPage _, Just token ) ->
+                            ( { model | errorMessage = Nothing }, Api.fetchMyEntries token )
+
+                        _ ->
+                            ( model, Cmd.none )
+
+                Err _ ->
+                    ( { model | errorMessage = Just "Failed to make entry public." }, Cmd.none )
+
         -- Groups
         GotGroups result ->
             case result of
