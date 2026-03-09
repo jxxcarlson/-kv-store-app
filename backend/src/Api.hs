@@ -38,6 +38,7 @@ type GroupAPI =
 -- Public (no auth)
 type PublicDataAPI = "public" :>
   (    QueryParam "search" Text :> QueryParam "sort" Text :> Get '[JSON] [DataEntrySummary]
+  :<|> Capture "key" Text :> Get '[JSON] DataValueResponse
   )
 
 apiProxy :: Proxy API

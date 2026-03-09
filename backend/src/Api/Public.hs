@@ -12,10 +12,10 @@ import Servant
 
 import Api (PublicDataAPI)
 import Db.Schema
-import Types (DataEntrySummary(..))
+import Types (DataEntrySummary(..), DataValueResponse(..))
 
 publicHandlers :: ConnectionPool -> ServerT PublicDataAPI Handler
-publicHandlers pool = listPublicHandler pool
+publicHandlers pool = listPublicHandler pool :<|> getPublicValueHandler pool
 
 listPublicHandler :: ConnectionPool -> Maybe Text -> Maybe Text -> Handler [DataEntrySummary]
 listPublicHandler pool mSearch mSort = do
@@ -36,6 +36,21 @@ listPublicHandler pool mSearch mSort = do
         Just "modified" -> sortBy (comparing dataEntryModifiedAt) filtered
         _               -> sortBy (comparing dataEntryKey) filtered
   return $ map toSummary sorted
+
+getPublicValueHandler :: ConnectionPool -> Text -> Handler DataValueResponse
+getPublicValueHandler pool key = do
+  let publicGroupKey = toSqlKey 1 :: Key Group
+  entries <- liftIO $ runSqlPool
+    (selectList [DataEntryGroupId ==. Just publicGroupKey, DataEntryKey ==. key] [])
+    pool
+  case entries of
+    [Entity _ entry] ->
+      return $ DataValueResponse
+        { dvrKey      = dataEntryKey entry
+        , dvrDataType = dataEntryDataType entry
+        , dvrValue    = dataEntryValue entry
+        }
+    _ -> throwError err404 { errBody = "Public entry not found" }
 
 toSummary :: DataEntry -> DataEntrySummary
 toSummary entry = DataEntrySummary
