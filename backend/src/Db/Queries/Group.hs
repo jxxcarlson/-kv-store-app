@@ -59,10 +59,15 @@ seedPublicGroup pool = runSqlPool go pool
   where
     go :: ReaderT SqlBackend IO ()
     go = do
+      -- Ensure a system user exists for owning the public group
+      let systemUserKey = toSqlKey 1 :: Key User
+      mUser <- get systemUserKey
+      case mUser of
+        Just _  -> return ()
+        Nothing -> insertKey systemUserKey (User "system" "system@localhost" "" [])
+      -- Seed the public group
       let publicKey = toSqlKey 1 :: Key Group
       mGroup <- get publicKey
       case mGroup of
         Just _  -> return ()
-        Nothing -> do
-          let systemUser = toSqlKey 0 :: Key User
-          insertKey publicKey (Group systemUser "public" True False)
+        Nothing -> insertKey publicKey (Group systemUserKey "public" True False)
