@@ -13,6 +13,7 @@ import Page.Groups
 import Page.MyData
 import Page.Public
 import Types exposing (..)
+import View.Table
 import Url
 import Url.Parser as Parser exposing ((</>))
 
@@ -491,12 +492,19 @@ update msg model =
         GotEntryValue result ->
             case result of
                 Ok entry ->
+                    let
+                        defaultMode =
+                            if View.Table.hasRenderedView entry.dataType then
+                                Rendered
+                            else
+                                Raw
+                    in
                     case model.page of
                         PublicPage publicModel ->
-                            ( { model | page = PublicPage { publicModel | expandedEntry = Just entry } }, Cmd.none )
+                            ( { model | page = PublicPage { publicModel | expandedEntry = Just entry, displayMode = defaultMode } }, Cmd.none )
 
                         MyDataPage myDataModel ->
-                            ( { model | page = MyDataPage { myDataModel | expandedEntry = Just entry } }, Cmd.none )
+                            ( { model | page = MyDataPage { myDataModel | expandedEntry = Just entry, displayMode = defaultMode } }, Cmd.none )
 
                         _ ->
                             ( model, Cmd.none )

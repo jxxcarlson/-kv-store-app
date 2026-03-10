@@ -104,6 +104,16 @@ label { font-weight: 600; display: block; margin-top: 8px; }
 
 .actions { display: flex; gap: 8px; white-space: nowrap; }
 
+.scripta-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+.scripta-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+}
 .scripta-layout {
     display: flex;
     gap: 16px;

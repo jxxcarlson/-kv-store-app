@@ -1,10 +1,11 @@
-module View.Table exposing (display, displayModeToggle, formatTimestamp, viewTable)
+module View.Table exposing (display, displayModeToggle, formatTimestamp, hasRenderedView, viewTable)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode
 import Markdown
+import MiniLatex.EditSimple
 import String
 import Types exposing (..)
 import V3.Compiler
@@ -68,7 +69,10 @@ expandedPanel expandedEntry displayMode =
                         ""
             in
             div [ class ("expanded-content" ++ extraClass) ]
-                [ displayModeToggle ex.dataType displayMode
+                [ if ex.dataType == "scripta" && displayMode == Rendered then
+                    text ""
+                  else
+                    displayModeToggle ex.dataType displayMode
                 , display ex.dataType displayMode ex.value
                 ]
 
@@ -97,7 +101,7 @@ sortableHeader label field activeField direction =
 
 hasRenderedView : String -> Bool
 hasRenderedView dataType =
-    List.member dataType [ "md", "html", "scripta" ]
+    List.member dataType [ "md", "html", "scripta", "tex" ]
 
 
 displayModeToggle : String -> DisplayMode -> Html Msg
@@ -138,6 +142,12 @@ display dataType mode content =
                     []
                 ]
 
+        ( "tex", Rendered ) ->
+            div [ class "content-display rendered-content" ]
+                (MiniLatex.EditSimple.render content
+                    |> List.map (Html.map (\_ -> NoOp))
+                )
+
         ( "scripta", Rendered ) ->
             let
                 params =
@@ -171,14 +181,20 @@ display dataType mode content =
                                     NoOp
                         )
             in
-            div [ class "scripta-layout" ]
-                [ div [ class "content-display rendered-content", id "scripta-content" ]
-                    (List.map mapMsg output.body)
-                , div
-                    [ class "toc-panel"
-                    , preventDefaultOn "click" (Json.Decode.succeed ( NoOp, True ))
+            div []
+                [ div [ class "scripta-header" ]
+                    [ displayModeToggle dataType mode
+                    , div [ class "scripta-title" ] [ mapMsg output.title ]
                     ]
-                    (List.map mapMsg output.toc)
+                , div [ class "scripta-layout" ]
+                    [ div [ class "content-display rendered-content", id "scripta-content" ]
+                        (List.map mapMsg output.body)
+                    , div
+                        [ class "toc-panel"
+                        , preventDefaultOn "click" (Json.Decode.succeed ( NoOp, True ))
+                        ]
+                        (List.map mapMsg output.toc)
+                    ]
                 ]
 
         _ ->

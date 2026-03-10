@@ -181,7 +181,10 @@ myDataExpandedPanel expandedEntry displayMode =
                         ""
             in
             div [ class ("expanded-content" ++ extraClass) ]
-                [ View.Table.displayModeToggle ex.dataType displayMode
+                [ if ex.dataType == "scripta" && displayMode == Rendered then
+                    text ""
+                  else
+                    View.Table.displayModeToggle ex.dataType displayMode
                 , View.Table.display ex.dataType displayMode ex.value
                 ]
 
