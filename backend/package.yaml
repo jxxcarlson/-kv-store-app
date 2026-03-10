@@ -6,6 +6,7 @@ dependencies:
   - aeson
   - bcrypt
   - bytestring
+  - http-types
   - esqueleto
   - jose
   - lens

@@ -116,7 +116,7 @@ routeToPage : Route -> Page
 routeToPage route =
     case route of
         PublicRoute ->
-            PublicPage { entries = [], searchTerm = "", sortBy = SortByKey, sortDirection = Ascending }
+            PublicPage { entries = [], searchTerm = "", sortBy = SortByKey, sortDirection = Ascending, expandedEntry = Nothing, displayMode = Raw }
 
         LoginRoute ->
             LoginPage { email = "", password = "" }
@@ -125,7 +125,7 @@ routeToPage route =
             RegisterPage { name = "", email = "", password = "" }
 
         MyDataRoute ->
-            MyDataPage { entries = [], showCreateForm = False, createForm = emptyCreateForm }
+            MyDataPage { entries = [], showCreateForm = False, createForm = emptyCreateForm, expandedEntry = Nothing, displayMode = Raw }
 
         GroupsRoute ->
             GroupsPage { groups = [] }
@@ -398,6 +398,82 @@ update msg model =
 
                 Err _ ->
                     ( { model | errorMessage = Just "Failed to make entry public." }, Cmd.none )
+
+        -- Expand entry
+        ToggleExpandEntry key ->
+            case model.page of
+                PublicPage publicModel ->
+                    case publicModel.expandedEntry of
+                        Just ex ->
+                            if ex.key == key then
+                                ( { model | page = PublicPage { publicModel | expandedEntry = Nothing } }, Cmd.none )
+
+                            else
+                                ( model, Api.fetchPublicEntryValue key )
+
+                        Nothing ->
+                            ( model, Api.fetchPublicEntryValue key )
+
+                MyDataPage myDataModel ->
+                    case myDataModel.expandedEntry of
+                        Just ex ->
+                            if ex.key == key then
+                                ( { model | page = MyDataPage { myDataModel | expandedEntry = Nothing } }, Cmd.none )
+
+                            else
+                                case model.token of
+                                    Just token ->
+                                        ( model, Api.fetchEntryValue token key )
+
+                                    Nothing ->
+                                        ( model, Cmd.none )
+
+                        Nothing ->
+                            case model.token of
+                                Just token ->
+                                    ( model, Api.fetchEntryValue token key )
+
+                                Nothing ->
+                                    ( model, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotEntryValue result ->
+            case result of
+                Ok entry ->
+                    case model.page of
+                        PublicPage publicModel ->
+                            ( { model | page = PublicPage { publicModel | expandedEntry = Just entry } }, Cmd.none )
+
+                        MyDataPage myDataModel ->
+                            ( { model | page = MyDataPage { myDataModel | expandedEntry = Just entry } }, Cmd.none )
+
+                        _ ->
+                            ( model, Cmd.none )
+
+                Err _ ->
+                    ( { model | errorMessage = Just "Failed to load entry value." }, Cmd.none )
+
+        ToggleDisplayMode ->
+            let
+                toggle mode =
+                    case mode of
+                        Raw ->
+                            Rendered
+
+                        Rendered ->
+                            Raw
+            in
+            case model.page of
+                PublicPage publicModel ->
+                    ( { model | page = PublicPage { publicModel | displayMode = toggle publicModel.displayMode } }, Cmd.none )
+
+                MyDataPage myDataModel ->
+                    ( { model | page = MyDataPage { myDataModel | displayMode = toggle myDataModel.displayMode } }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
 
         -- Groups
         GotGroups result ->

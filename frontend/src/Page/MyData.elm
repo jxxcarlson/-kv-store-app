@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Types exposing (..)
+import View.Table
 
 
 view : MyDataModel -> Html Msg
@@ -26,7 +27,7 @@ view model =
 
           else
             text ""
-        , viewEntriesTable model.entries
+        , viewEntriesTable model.expandedEntry model.displayMode model.entries
         ]
 
 
@@ -50,9 +51,13 @@ viewCreateForm form =
                 [ onInput (SetCreateField "dataType")
                 , value form.dataType
                 ]
-                [ option [ value "txt" ] [ text "txt" ]
-                , option [ value "csv" ] [ text "csv" ]
+                [ option [ value "csv" ] [ text "csv" ]
+                , option [ value "txt" ] [ text "txt" ]
+                , option [ value "md" ] [ text "md" ]
+                , option [ value "tex" ] [ text "tex" ]
+                , option [ value "scripta" ] [ text "scripta" ]
                 , option [ value "json" ] [ text "json" ]
+                , option [ value "html" ] [ text "html" ]
                 ]
             ]
         , div [ class "form-group" ]
@@ -90,8 +95,8 @@ viewCreateForm form =
         ]
 
 
-viewEntriesTable : List DataEntrySummary -> Html Msg
-viewEntriesTable entries =
+viewEntriesTable : Maybe ExpandedEntry -> DisplayMode -> List DataEntrySummary -> Html Msg
+viewEntriesTable expandedEntry displayMode entries =
     if List.isEmpty entries then
         p [ class "empty-message" ] [ text "You don't have any data entries yet." ]
 
@@ -107,23 +112,53 @@ viewEntriesTable entries =
                     , th [] [ text "Actions" ]
                     ]
                 ]
-            , tbody [] (List.map viewEntryRow entries)
+            , tbody [] (List.concatMap (viewEntryRow expandedEntry displayMode) entries)
             ]
 
 
-viewEntryRow : DataEntrySummary -> Html Msg
-viewEntryRow entry =
-    tr []
-        [ td [] [ text entry.key ]
-        , td [] [ text entry.dataType ]
-        , td [] [ text entry.description ]
-        , td [] [ text entry.createdAt ]
-        , td [] [ text entry.modifiedAt ]
-        , td []
-            [ button [ class "btn", onClick (MakePublic entry.key) ]
-                [ text "Make Public" ]
-            , text " "
-            , button [ class "btn btn-danger", onClick (DeleteEntry entry.key) ]
-                [ text "Delete" ]
-            ]
-        ]
+viewEntryRow : Maybe ExpandedEntry -> DisplayMode -> DataEntrySummary -> List (Html Msg)
+viewEntryRow expandedEntry displayMode entry =
+    let
+        isExpanded =
+            case expandedEntry of
+                Just ex ->
+                    ex.key == entry.key
+
+                Nothing ->
+                    False
+
+        dataRow =
+            tr []
+                [ td [ onClick (ToggleExpandEntry entry.key), style "cursor" "pointer" ] [ text entry.key ]
+                , td [] [ text entry.dataType ]
+                , td [ onClick (ToggleExpandEntry entry.key), style "cursor" "pointer" ] [ text entry.description ]
+                , td [] [ text (View.Table.formatTimestamp entry.createdAt) ]
+                , td [] [ text (View.Table.formatTimestamp entry.modifiedAt) ]
+                , td []
+                    [ button [ class "btn", onClick (MakePublic entry.key) ]
+                        [ text "Make Public" ]
+                    , text " "
+                    , button [ class "btn btn-danger", onClick (DeleteEntry entry.key) ]
+                        [ text "Delete" ]
+                    ]
+                ]
+
+        expansionRow =
+            case expandedEntry of
+                Just ex ->
+                    [ tr [ class "expanded-row" ]
+                        [ td [ colspan 6, class "expanded-content" ]
+                            [ View.Table.displayModeToggle ex.dataType displayMode
+                            , View.Table.display ex.dataType displayMode ex.value
+                            ]
+                        ]
+                    ]
+
+                Nothing ->
+                    []
+    in
+    if isExpanded then
+        dataRow :: expansionRow
+
+    else
+        [ dataRow ]

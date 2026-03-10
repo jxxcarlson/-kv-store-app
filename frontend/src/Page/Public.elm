@@ -28,5 +28,5 @@ view publicModel =
     div [ class "public-page" ]
         [ h2 [] [ text "Public Data" ]
         , View.Search.viewSearch publicModel.searchTerm
-        , View.Table.viewTable publicModel.sortBy publicModel.sortDirection filtered
+        , View.Table.viewTable publicModel.sortBy publicModel.sortDirection publicModel.expandedEntry publicModel.displayMode filtered
         ]

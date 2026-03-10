@@ -32,6 +32,14 @@ decodeDataEntrySummary =
         (D.field "desModifiedAt" D.string)
 
 
+decodeExpandedEntry : D.Decoder ExpandedEntry
+decodeExpandedEntry =
+    D.map3 ExpandedEntry
+        (D.field "dvrKey" D.string)
+        (D.field "dvrDataType" D.string)
+        (D.field "dvrValue" D.string)
+
+
 decodeGroupInfo : D.Decoder GroupInfo
 decodeGroupInfo =
     D.map5 GroupInfo
@@ -206,6 +214,27 @@ fetchGroups token =
         , url = apiBase ++ "/api/groups"
         , body = Http.emptyBody
         , expect = Http.expectJson GotGroups (D.list decodeGroupInfo)
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+fetchPublicEntryValue : String -> Cmd Msg
+fetchPublicEntryValue key =
+    Http.get
+        { url = apiBase ++ "/api/public/" ++ key
+        , expect = Http.expectJson GotEntryValue decodeExpandedEntry
+        }
+
+
+fetchEntryValue : String -> String -> Cmd Msg
+fetchEntryValue token key =
+    Http.request
+        { method = "GET"
+        , headers = [ authHeader token ]
+        , url = apiBase ++ "/api/data/" ++ key
+        , body = Http.emptyBody
+        , expect = Http.expectJson GotEntryValue decodeExpandedEntry
         , timeout = Nothing
         , tracker = Nothing
         }

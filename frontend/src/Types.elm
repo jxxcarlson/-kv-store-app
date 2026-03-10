@@ -29,6 +29,8 @@ type alias PublicModel =
     , searchTerm : String
     , sortBy : SortField
     , sortDirection : SortDirection
+    , expandedEntry : Maybe ExpandedEntry
+    , displayMode : DisplayMode
     }
 
 
@@ -49,6 +51,8 @@ type alias MyDataModel =
     { entries : List DataEntrySummary
     , showCreateForm : Bool
     , createForm : CreateDataForm
+    , expandedEntry : Maybe ExpandedEntry
+    , displayMode : DisplayMode
     }
 
 
@@ -83,6 +87,18 @@ type alias DataEntrySummary =
     , createdAt : String
     , modifiedAt : String
     }
+
+
+type alias ExpandedEntry =
+    { key : String
+    , dataType : String
+    , value : String
+    }
+
+
+type DisplayMode
+    = Raw
+    | Rendered
 
 
 type alias GroupInfo =
@@ -142,6 +158,9 @@ type Msg
     | GotDeleteResponse (Result Http.Error ())
     | MakePublic String
     | GotMakePublicResponse (Result Http.Error ())
+    | ToggleExpandEntry String
+    | GotEntryValue (Result Http.Error ExpandedEntry)
+    | ToggleDisplayMode
       -- Groups
     | GotGroups (Result Http.Error (List GroupInfo))
 
