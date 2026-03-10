@@ -55,7 +55,15 @@ expandedPanel : Maybe ExpandedEntry -> DisplayMode -> Html Msg
 expandedPanel expandedEntry displayMode =
     case expandedEntry of
         Just ex ->
-            div [ class "expanded-content" ]
+            let
+                extraClass =
+                    if ex.dataType == "html" && displayMode == Rendered then
+                        " expanded-content-noscroll"
+
+                    else
+                        ""
+            in
+            div [ class ("expanded-content" ++ extraClass) ]
                 [ displayModeToggle ex.dataType displayMode
                 , display ex.dataType displayMode ex.value
                 ]
@@ -116,18 +124,18 @@ display dataType mode content =
                 (Markdown.toHtml Nothing content)
 
         ( "html", Rendered ) ->
-            div [ class "content-display rendered-content" ]
+            div [ class "content-display rendered-content iframe-content" ]
                 [ iframe
                     [ attribute "srcdoc" content
                     , style "width" "100%"
+                    , style "height" "calc(100vh - 280px)"
                     , style "border" "none"
-                    , style "min-height" "200px"
                     ]
                     []
                 ]
 
         _ ->
-            div [ class "content-display" ]
+            div [ class "content-display source-content" ]
                 [ text content ]
 
 

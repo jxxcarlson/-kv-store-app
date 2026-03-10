@@ -7,6 +7,7 @@ import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Http
 import Json.Decode
 import Page.Groups
 import Page.MyData
@@ -125,13 +126,28 @@ routeToPage route =
             RegisterPage { name = "", email = "", password = "" }
 
         MyDataRoute ->
-            MyDataPage { entries = [], showCreateForm = False, createForm = emptyCreateForm, expandedEntry = Nothing, displayMode = Raw }
+            MyDataPage { entries = [], showCreateForm = False, createForm = emptyCreateForm, expandedEntry = Nothing, displayMode = Raw, searchTerm = "" }
 
         GroupsRoute ->
             GroupsPage { groups = [] }
 
         NotFoundRoute ->
             NotFoundPage
+
+
+handleAuthError : Model -> String -> Http.Error -> ( Model, Cmd Msg )
+handleAuthError model fallbackMsg error =
+    case error of
+        Http.BadStatus 401 ->
+            ( { model | token = Nothing, errorMessage = Nothing }
+            , Cmd.batch
+                [ removeToken ()
+                , Nav.pushUrl model.key "/"
+                ]
+            )
+
+        _ ->
+            ( { model | errorMessage = Just fallbackMsg }, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -246,6 +262,9 @@ update msg model =
                 PublicPage publicModel ->
                     ( { model | page = PublicPage { publicModel | searchTerm = term } }, Cmd.none )
 
+                MyDataPage myDataModel ->
+                    ( { model | page = MyDataPage { myDataModel | searchTerm = term } }, Cmd.none )
+
                 _ ->
                     ( model, Cmd.none )
 
@@ -281,8 +300,8 @@ update msg model =
                         _ ->
                             ( model, Cmd.none )
 
-                Err _ ->
-                    ( { model | errorMessage = Just "Failed to load your entries." }, Cmd.none )
+                Err err ->
+                    handleAuthError model "Failed to load your entries." err
 
         ToggleCreateForm ->
             case model.page of
@@ -354,8 +373,8 @@ update msg model =
                         _ ->
                             ( model, Cmd.none )
 
-                Err _ ->
-                    ( { model | errorMessage = Just "Failed to create entry." }, Cmd.none )
+                Err err ->
+                    handleAuthError model "Failed to create entry." err
 
         DeleteEntry key ->
             case model.token of
@@ -375,13 +394,21 @@ update msg model =
                         _ ->
                             ( model, Cmd.none )
 
-                Err _ ->
-                    ( { model | errorMessage = Just "Failed to delete entry." }, Cmd.none )
+                Err err ->
+                    handleAuthError model "Failed to delete entry." err
 
         MakePublic key ->
             case model.token of
                 Just token ->
                     ( model, Api.assignToPublicGroup token key )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        MakePrivate key ->
+            case model.token of
+                Just token ->
+                    ( model, Api.removeFromPublicGroup token key )
 
                 Nothing ->
                     ( model, Cmd.none )
@@ -396,8 +423,8 @@ update msg model =
                         _ ->
                             ( model, Cmd.none )
 
-                Err _ ->
-                    ( { model | errorMessage = Just "Failed to make entry public." }, Cmd.none )
+                Err err ->
+                    handleAuthError model "Failed to update entry visibility." err
 
         -- Expand entry
         ToggleExpandEntry key ->
@@ -452,8 +479,8 @@ update msg model =
                         _ ->
                             ( model, Cmd.none )
 
-                Err _ ->
-                    ( { model | errorMessage = Just "Failed to load entry value." }, Cmd.none )
+                Err err ->
+                    handleAuthError model "Failed to load entry value." err
 
         ToggleDisplayMode ->
             let
@@ -486,8 +513,8 @@ update msg model =
                         _ ->
                             ( model, Cmd.none )
 
-                Err _ ->
-                    ( { model | errorMessage = Just "Failed to load groups." }, Cmd.none )
+                Err err ->
+                    handleAuthError model "Failed to load groups." err
 
 
 view : Model -> Browser.Document Msg

@@ -7,6 +7,7 @@ module Db.Queries.Data
   , updateData
   , deleteData
   , assignGroup
+  , unassignGroup
   ) where
 
 import Data.Text (Text)
@@ -47,3 +48,7 @@ deleteData pool entryId =
 assignGroup :: ConnectionPool -> Key DataEntry -> Key Group -> IO ()
 assignGroup pool entryId groupId =
   runSqlPool (update entryId [DataEntryGroupId =. Just groupId]) pool
+
+unassignGroup :: ConnectionPool -> Key DataEntry -> IO ()
+unassignGroup pool entryId =
+  runSqlPool (update entryId [DataEntryGroupId =. Nothing]) pool

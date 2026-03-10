@@ -53,6 +53,7 @@ type alias MyDataModel =
     , createForm : CreateDataForm
     , expandedEntry : Maybe ExpandedEntry
     , displayMode : DisplayMode
+    , searchTerm : String
     }
 
 
@@ -86,6 +87,7 @@ type alias DataEntrySummary =
     , description : String
     , createdAt : String
     , modifiedAt : String
+    , isPublic : Bool
     }
 
 
@@ -157,6 +159,7 @@ type Msg
     | DeleteEntry String
     | GotDeleteResponse (Result Http.Error ())
     | MakePublic String
+    | MakePrivate String
     | GotMakePublicResponse (Result Http.Error ())
     | ToggleExpandEntry String
     | GotEntryValue (Result Http.Error ExpandedEntry)

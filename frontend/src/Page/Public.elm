@@ -26,7 +26,9 @@ view publicModel =
                     publicModel.entries
     in
     div [ class "public-page" ]
-        [ h2 [] [ text "Public Data" ]
-        , View.Search.viewSearch publicModel.searchTerm
+        [ div [ class "page-header" ]
+            [ h2 [] [ text "Public Data" ]
+            , View.Search.viewSearch publicModel.searchTerm
+            ]
         , View.Table.viewTable publicModel.sortBy publicModel.sortDirection publicModel.expandedEntry publicModel.displayMode filtered
         ]

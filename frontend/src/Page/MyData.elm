@@ -4,14 +4,32 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Types exposing (..)
+import View.Search
 import View.Table
 
 
 view : MyDataModel -> Html Msg
 view model =
+    let
+        term =
+            String.toLower model.searchTerm
+
+        filtered =
+            if String.isEmpty term then
+                model.entries
+
+            else
+                List.filter
+                    (\entry ->
+                        String.contains term (String.toLower entry.key)
+                            || String.contains term (String.toLower entry.description)
+                    )
+                    model.entries
+    in
     div [ class "my-data-page" ]
         [ div [ class "page-header" ]
             [ h2 [] [ text "My Data" ]
+            , View.Search.viewSearch model.searchTerm
             , button [ class "btn btn-primary", onClick ToggleCreateForm ]
                 [ text
                     (if model.showCreateForm then
@@ -27,7 +45,7 @@ view model =
 
           else
             text ""
-        , viewEntriesTable model.expandedEntry model.displayMode model.entries
+        , viewEntriesTable model.expandedEntry model.displayMode filtered
         ]
 
 
@@ -137,8 +155,13 @@ viewEntryRow expandedEntry entry =
         , td [] [ text (View.Table.formatTimestamp entry.createdAt) ]
         , td [] [ text (View.Table.formatTimestamp entry.modifiedAt) ]
         , td [ class "actions" ]
-            [ button [ class "btn", onClick (MakePublic entry.key) ]
-                [ text "Make Public" ]
+            [ if entry.isPublic then
+                button [ class "btn", onClick (MakePrivate entry.key) ]
+                    [ text "Unpublish" ]
+
+              else
+                button [ class "btn", onClick (MakePublic entry.key) ]
+                    [ text "Publish" ]
             , button [ class "btn btn-danger", onClick (DeleteEntry entry.key) ]
                 [ text "Delete" ]
             ]
@@ -149,7 +172,15 @@ myDataExpandedPanel : Maybe ExpandedEntry -> DisplayMode -> Html Msg
 myDataExpandedPanel expandedEntry displayMode =
     case expandedEntry of
         Just ex ->
-            div [ class "expanded-content" ]
+            let
+                extraClass =
+                    if ex.dataType == "html" && displayMode == Rendered then
+                        " expanded-content-noscroll"
+
+                    else
+                        ""
+            in
+            div [ class ("expanded-content" ++ extraClass) ]
                 [ View.Table.displayModeToggle ex.dataType displayMode
                 , View.Table.display ex.dataType displayMode ex.value
                 ]

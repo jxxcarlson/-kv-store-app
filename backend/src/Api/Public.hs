@@ -59,4 +59,5 @@ toSummary entry = DataEntrySummary
   , desDescription = dataEntryDescription entry
   , desCreatedAt   = dataEntryCreatedAt entry
   , desModifiedAt  = dataEntryModifiedAt entry
+  , desIsPublic    = True
   }

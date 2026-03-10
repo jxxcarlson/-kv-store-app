@@ -24,12 +24,13 @@ decodeAuthResponse =
 
 decodeDataEntrySummary : D.Decoder DataEntrySummary
 decodeDataEntrySummary =
-    D.map5 DataEntrySummary
+    D.map6 DataEntrySummary
         (D.field "desKey" D.string)
         (D.field "desDataType" D.string)
         (D.field "desDescription" D.string)
         (D.field "desCreatedAt" D.string)
         (D.field "desModifiedAt" D.string)
+        (D.field "desIsPublic" D.bool)
 
 
 decodeExpandedEntry : D.Decoder ExpandedEntry
@@ -200,6 +201,19 @@ assignToPublicGroup token key =
         , headers = [ authHeader token ]
         , url = apiBase ++ "/api/data/" ++ key ++ "/group"
         , body = Http.jsonBody (E.object [ ( "agrGroupId", E.int 1 ) ])
+        , expect = Http.expectWhatever GotMakePublicResponse
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+removeFromPublicGroup : String -> String -> Cmd Msg
+removeFromPublicGroup token key =
+    Http.request
+        { method = "PUT"
+        , headers = [ authHeader token ]
+        , url = apiBase ++ "/api/data/" ++ key ++ "/group"
+        , body = Http.jsonBody (E.object [ ( "agrGroupId", E.int 0 ) ])
         , expect = Http.expectWhatever GotMakePublicResponse
         , timeout = Nothing
         , tracker = Nothing

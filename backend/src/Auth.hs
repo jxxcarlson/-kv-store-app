@@ -58,7 +58,7 @@ mkJwk config = fromOctets (encodeUtf8 (pack (configJwtSecret config)))
 createToken :: AppConfig -> Int -> IO (Either SomeException Text)
 createToken config userId = try $ do
   now <- getCurrentTime
-  let expiry = addUTCTime 3600 now
+  let expiry = addUTCTime (4 * 3600) now
       claims = set claimSub (Just (review string (pack (show userId))))
              . set claimIat (Just (NumericDate now))
              . set claimExp (Just (NumericDate expiry))

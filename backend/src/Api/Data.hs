@@ -106,8 +106,11 @@ assignGroupHandler config pool authHeader key req = do
   case mEntry of
     Nothing -> throwError err404 { errBody = "Data entry not found" }
     Just (Entity entryId _) -> do
-      let groupKey = toSqlKey (fromIntegral (agrGroupId req)) :: Key Group
-      liftIO $ Q.assignGroup pool entryId groupKey
+      if agrGroupId req == 0
+        then liftIO $ Q.unassignGroup pool entryId
+        else do
+          let groupKey = toSqlKey (fromIntegral (agrGroupId req)) :: Key Group
+          liftIO $ Q.assignGroup pool entryId groupKey
       return NoContent
 
 -- | Convert a DataEntry to a DataEntrySummary
@@ -118,4 +121,5 @@ toSummary entry = DataEntrySummary
   , desDescription = dataEntryDescription entry
   , desCreatedAt   = dataEntryCreatedAt entry
   , desModifiedAt  = dataEntryModifiedAt entry
+  , desIsPublic    = dataEntryGroupId entry == Just (toSqlKey 1)
   }

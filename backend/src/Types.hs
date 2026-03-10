@@ -44,6 +44,7 @@ data DataEntrySummary = DataEntrySummary
   , desDescription :: Text
   , desCreatedAt   :: UTCTime
   , desModifiedAt  :: UTCTime
+  , desIsPublic    :: Bool
   } deriving (Show, Generic)
 instance FromJSON DataEntrySummary
 instance ToJSON DataEntrySummary
