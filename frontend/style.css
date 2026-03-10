@@ -59,14 +59,28 @@ label { font-weight: 600; display: block; margin-top: 8px; }
 
 .form-group { margin-bottom: 16px; max-width: 400px; }
 
-.expanded-content { padding: 12px; background: #fafafa; }
+.expanded-content {
+    padding: 12px;
+    background: #fafafa;
+    max-height: calc(100vh - 160px);
+    overflow-y: auto;
+}
 
 .display-mode-toggle { margin-bottom: 8px; }
 .btn-small { padding: 3px 10px; font-size: 12px; }
 .content-display {
-    margin-right: 4em;
-    max-width: 4.5in;
+    width: 65ch;
+    margin: 1rem auto;
+    padding: 1.5rem;
+    border: 1px solid #ccc;
     word-wrap: break-word;
-    font-size: 13px;
-    line-height: 1.5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 1rem;
+    line-height: 1.6;
 }
+.content-display iframe {
+    width: 100%;
+    height: calc(100vh - 250px);
+}
+
+.actions { display: flex; gap: 8px; white-space: nowrap; }

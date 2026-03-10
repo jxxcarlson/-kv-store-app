@@ -13,20 +13,55 @@ viewTable sortField sortDirection expandedEntry displayMode entries =
     let
         sortedEntries =
             sortEntries sortField sortDirection entries
+
+        visibleEntries =
+            case expandedEntry of
+                Just ex ->
+                    List.filter (\e -> e.key == ex.key) sortedEntries
+
+                Nothing ->
+                    sortedEntries
     in
-    table [ class "data-table" ]
-        [ thead []
-            [ tr []
-                [ sortableHeader "Key" SortByKey sortField sortDirection
-                , th [] [ text "Type" ]
-                , th [] [ text "Description" ]
-                , sortableHeader "Created" SortByCreated sortField sortDirection
-                , sortableHeader "Modified" SortByModified sortField sortDirection
+    div []
+        [ table [ class "data-table" ]
+            [ thead []
+                [ tr []
+                    [ sortableHeader "Key" SortByKey sortField sortDirection
+                    , th [] [ text "Type" ]
+                    , th [] [ text "Description" ]
+                    , sortableHeader "Created" SortByCreated sortField sortDirection
+                    , sortableHeader "Modified" SortByModified sortField sortDirection
+                    ]
                 ]
+            , tbody []
+                (List.map (viewRow expandedEntry) visibleEntries)
             ]
-        , tbody []
-            (List.concatMap (viewRowWithExpansion expandedEntry displayMode) sortedEntries)
+        , expandedPanel expandedEntry displayMode
         ]
+
+
+viewRow : Maybe ExpandedEntry -> DataEntrySummary -> Html Msg
+viewRow expandedEntry entry =
+    tr [ onClick (ToggleExpandEntry entry.key), style "cursor" "pointer" ]
+        [ td [] [ text entry.key ]
+        , td [] [ text entry.dataType ]
+        , td [] [ text entry.description ]
+        , td [] [ text (formatTimestamp entry.createdAt) ]
+        , td [] [ text (formatTimestamp entry.modifiedAt) ]
+        ]
+
+
+expandedPanel : Maybe ExpandedEntry -> DisplayMode -> Html Msg
+expandedPanel expandedEntry displayMode =
+    case expandedEntry of
+        Just ex ->
+            div [ class "expanded-content" ]
+                [ displayModeToggle ex.dataType displayMode
+                , display ex.dataType displayMode ex.value
+                ]
+
+        Nothing ->
+            text ""
 
 
 sortableHeader : String -> SortField -> SortField -> SortDirection -> Html Msg
@@ -46,45 +81,6 @@ sortableHeader label field activeField direction =
     in
     th [ onClick (SetSort field), style "cursor" "pointer" ]
         [ text (label ++ indicator) ]
-
-
-viewRowWithExpansion : Maybe ExpandedEntry -> DisplayMode -> DataEntrySummary -> List (Html Msg)
-viewRowWithExpansion expandedEntry displayMode entry =
-    let
-        isExpanded =
-            case expandedEntry of
-                Just ex ->
-                    ex.key == entry.key
-
-                Nothing ->
-                    False
-
-        dataRow =
-            tr []
-                [ td [ onClick (ToggleExpandEntry entry.key), style "cursor" "pointer" ] [ text entry.key ]
-                , td [] [ text entry.dataType ]
-                , td [ onClick (ToggleExpandEntry entry.key), style "cursor" "pointer" ] [ text entry.description ]
-                , td [] [ text (formatTimestamp entry.createdAt) ]
-                , td [] [ text (formatTimestamp entry.modifiedAt) ]
-                ]
-    in
-    if isExpanded then
-        case expandedEntry of
-            Just ex ->
-                [ dataRow
-                , tr [ class "expanded-row" ]
-                    [ td [ colspan 5, class "expanded-content" ]
-                        [ displayModeToggle ex.dataType displayMode
-                        , display ex.dataType displayMode ex.value
-                        ]
-                    ]
-                ]
-
-            Nothing ->
-                [ dataRow ]
-
-    else
-        [ dataRow ]
 
 
 hasRenderedView : String -> Bool
