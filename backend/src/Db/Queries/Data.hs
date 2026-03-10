@@ -29,7 +29,7 @@ getDataByKey pool uid key =
 createData :: ConnectionPool -> Key User -> Text -> Text -> Text -> Text -> Text -> IO (Key DataEntry)
 createData pool uid key dataType properties description value = do
   now <- getCurrentTime
-  runSqlPool (insert $ DataEntry uid Nothing key dataType now now properties description value) pool
+  runSqlPool (insert $ DataEntry uid Nothing key dataType now now properties description value Nothing) pool
 
 updateData :: ConnectionPool -> Key DataEntry -> UpdateDataRequest -> IO ()
 updateData pool entryId req = do

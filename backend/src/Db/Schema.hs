@@ -13,6 +13,7 @@
 
 module Db.Schema where
 
+import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.Time (UTCTime)
 import Database.Persist.TH
@@ -44,6 +45,7 @@ DataEntry sql=data
     properties Text default=''
     description Text default=''
     value Text default=''
+    blobValue ByteString Maybe sql=blob_value
     UniqueOwnerKey ownerId key
     deriving Show
 
