@@ -1,7 +1,8 @@
 {
     "type": "application",
     "source-directories": [
-        "src"
+        "src",
+        "scripta-compiler"
     ],
     "elm-version": "0.19.1",
     "dependencies": {
@@ -11,15 +12,24 @@
             "elm/html": "1.0.1",
             "elm/http": "2.0.0",
             "elm/json": "1.1.4",
+            "elm/parser": "1.1.0",
+            "elm/regex": "1.0.0",
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
-            "pablohirafuji/elm-markdown": "2.0.6"
+            "elm-community/list-extra": "8.7.0",
+            "elm-community/maybe-extra": "5.3.0",
+            "elm-community/result-extra": "2.4.0",
+            "maca/elm-rose-tree": "1.2.1",
+            "pablohirafuji/elm-markdown": "2.0.6",
+            "pablohirafuji/elm-syntax-highlight": "3.7.1",
+            "toastal/either": "3.6.3",
+            "zwilias/elm-rosetree": "1.5.0"
         },
         "indirect": {
             "elm/bytes": "1.0.8",
             "elm/file": "1.0.5",
-            "elm/regex": "1.0.0",
-            "elm/virtual-dom": "1.0.5"
+            "elm/virtual-dom": "1.0.5",
+            "elm-community/array-extra": "2.6.0"
         }
     },
     "test-dependencies": {

@@ -6,6 +6,8 @@ import Html.Events exposing (..)
 import Markdown
 import String
 import Types exposing (..)
+import V3.Compiler
+import V3.Types exposing (Filter(..), Theme(..))
 
 
 viewTable : SortField -> SortDirection -> Maybe ExpandedEntry -> DisplayMode -> List DataEntrySummary -> Html Msg
@@ -93,7 +95,7 @@ sortableHeader label field activeField direction =
 
 hasRenderedView : String -> Bool
 hasRenderedView dataType =
-    List.member dataType [ "md", "html" ]
+    List.member dataType [ "md", "html", "scripta" ]
 
 
 displayModeToggle : String -> DisplayMode -> Html Msg
@@ -133,6 +135,25 @@ display dataType mode content =
                     ]
                     []
                 ]
+
+        ( "scripta", Rendered ) ->
+            let
+                params =
+                    { filter = NoFilter
+                    , windowWidth = 600
+                    , theme = Light
+                    , editCount = 0
+                    , width = 500
+                    , showTOC = False
+                    , sizing = V3.Types.defaultSizingConfig
+                    , maxLevel = 1
+                    }
+
+                output =
+                    V3.Compiler.compile params (String.lines content)
+            in
+            div [ class "content-display rendered-content" ]
+                (List.map (Html.map (\_ -> NoOp)) output.body)
 
         _ ->
             div [ class "content-display source-content" ]
