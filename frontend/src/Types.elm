@@ -95,6 +95,7 @@ type alias ExpandedEntry =
     { key : String
     , dataType : String
     , value : String
+    , blobObjectUrl : Maybe String
     }
 
 
@@ -167,6 +168,8 @@ type Msg
       -- Groups
     | GotGroups (Result Http.Error (List GroupInfo))
     | ScrollToId String
+    | GotBlobUpload Bool
+    | GotBlobUrl String
 
 
 type alias AuthResponse =

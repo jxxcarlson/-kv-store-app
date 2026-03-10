@@ -1,4 +1,4 @@
-module View.Table exposing (display, displayModeToggle, formatTimestamp, hasRenderedView, viewTable)
+module View.Table exposing (display, displayModeToggle, formatTimestamp, hasRenderedView, isBinaryType, viewTable)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -73,7 +73,7 @@ expandedPanel expandedEntry displayMode =
                     text ""
                   else
                     displayModeToggle ex.dataType displayMode
-                , display ex.dataType displayMode ex.value
+                , display ex.dataType displayMode ex.value ex.blobObjectUrl
                 ]
 
         Nothing ->
@@ -104,6 +104,11 @@ hasRenderedView dataType =
     List.member dataType [ "md", "html", "scripta", "tex" ]
 
 
+isBinaryType : String -> Bool
+isBinaryType dt =
+    List.member dt [ "pdf", "jpg", "png", "mp3" ]
+
+
 displayModeToggle : String -> DisplayMode -> Html Msg
 displayModeToggle dataType mode =
     if hasRenderedView dataType then
@@ -124,9 +129,45 @@ displayModeToggle dataType mode =
         text ""
 
 
-display : String -> DisplayMode -> String -> Html Msg
-display dataType mode content =
+display : String -> DisplayMode -> String -> Maybe String -> Html Msg
+display dataType mode content maybeBlobUrl =
     case ( dataType, mode ) of
+        ( "pdf", _ ) ->
+            case maybeBlobUrl of
+                Just url ->
+                    div [ class "content-display rendered-content iframe-content" ]
+                        [ iframe [ src url, style "width" "100%", style "height" "calc(100vh - 280px)", style "border" "none" ] [] ]
+
+                Nothing ->
+                    div [ class "content-display" ] [ text "Loading..." ]
+
+        ( "jpg", _ ) ->
+            case maybeBlobUrl of
+                Just url ->
+                    div [ class "content-display rendered-content" ]
+                        [ img [ src url, style "max-width" "100%" ] [] ]
+
+                Nothing ->
+                    div [ class "content-display" ] [ text "Loading..." ]
+
+        ( "png", _ ) ->
+            case maybeBlobUrl of
+                Just url ->
+                    div [ class "content-display rendered-content" ]
+                        [ img [ src url, style "max-width" "100%" ] [] ]
+
+                Nothing ->
+                    div [ class "content-display" ] [ text "Loading..." ]
+
+        ( "mp3", _ ) ->
+            case maybeBlobUrl of
+                Just url ->
+                    div [ class "content-display rendered-content" ]
+                        [ audio [ src url, attribute "controls" "" ] [] ]
+
+                Nothing ->
+                    div [ class "content-display" ] [ text "Loading..." ]
+
         ( "md", Rendered ) ->
             div [ class "content-display rendered-content" ]
                 (Markdown.toHtml Nothing content)

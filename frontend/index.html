@@ -25,6 +25,39 @@
             localStorage.removeItem('kvstore-token');
         });
 
+        app.ports.uploadBlob.subscribe(function(data) {
+            var fileInput = document.getElementById('blob-file-input');
+            if (!fileInput || !fileInput.files[0]) {
+                app.ports.blobUploaded.send(false);
+                return;
+            }
+            var file = fileInput.files[0];
+            fetch('http://localhost:3000/api/data/' + encodeURIComponent(data.key) + '/blob', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + data.token,
+                    'Content-Type': 'application/octet-stream'
+                },
+                body: file
+            }).then(function(response) {
+                app.ports.blobUploaded.send(response.ok);
+            }).catch(function() {
+                app.ports.blobUploaded.send(false);
+            });
+        });
+
+        app.ports.fetchBlob.subscribe(function(data) {
+            fetch(data.url, {
+                headers: { 'Authorization': 'Bearer ' + data.token }
+            }).then(function(r) { return r.blob(); })
+              .then(function(blob) {
+                var url = URL.createObjectURL(blob);
+                app.ports.gotBlobUrl.send(url);
+            }).catch(function() {
+                app.ports.gotBlobUrl.send('');
+            });
+        });
+
         app.ports.scrollToElement.subscribe(function(id) {
             requestAnimationFrame(function() {
                 var el = document.getElementById(id);

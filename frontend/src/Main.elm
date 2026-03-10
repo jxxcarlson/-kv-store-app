@@ -27,6 +27,18 @@ port removeToken : () -> Cmd msg
 port scrollToElement : String -> Cmd msg
 
 
+port uploadBlob : { key : String, token : String } -> Cmd msg
+
+
+port blobUploaded : (Bool -> msg) -> Sub msg
+
+
+port fetchBlob : { url : String, token : String } -> Cmd msg
+
+
+port gotBlobUrl : (String -> msg) -> Sub msg
+
+
 type alias Flags =
     Maybe String
 
@@ -37,7 +49,12 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions =
+            \_ ->
+                Sub.batch
+                    [ blobUploaded GotBlobUpload
+                    , gotBlobUrl GotBlobUrl
+                    ]
         , onUrlRequest = UrlRequested
         , onUrlChange = UrlChanged
         }
@@ -381,6 +398,19 @@ update msg model =
                 Ok newEntry ->
                     case model.page of
                         MyDataPage myDataModel ->
+                            let
+                                uploadCmd =
+                                    if List.member newEntry.dataType [ "pdf", "jpg", "png", "mp3" ] then
+                                        case model.token of
+                                            Just token ->
+                                                uploadBlob { key = newEntry.key, token = token }
+
+                                            Nothing ->
+                                                Cmd.none
+
+                                    else
+                                        Cmd.none
+                            in
                             ( { model
                                 | page =
                                     MyDataPage
@@ -390,7 +420,7 @@ update msg model =
                                             , createForm = emptyCreateForm
                                         }
                               }
-                            , Cmd.none
+                            , uploadCmd
                             )
 
                         _ ->
@@ -496,15 +526,39 @@ update msg model =
                         defaultMode =
                             if View.Table.hasRenderedView entry.dataType then
                                 Rendered
+
                             else
                                 Raw
+
+                        binaryCmd =
+                            if View.Table.isBinaryType entry.dataType then
+                                case model.token of
+                                    Just token ->
+                                        fetchBlob { url = "http://localhost:3000/api/data/" ++ entry.key ++ "/blob", token = token }
+
+                                    Nothing ->
+                                        Cmd.none
+
+                            else
+                                Cmd.none
                     in
                     case model.page of
                         PublicPage publicModel ->
-                            ( { model | page = PublicPage { publicModel | expandedEntry = Just entry, displayMode = defaultMode } }, Cmd.none )
+                            let
+                                publicBlobUrl =
+                                    if View.Table.isBinaryType entry.dataType then
+                                        Just ("http://localhost:3000/api/public/" ++ entry.key ++ "/blob")
+
+                                    else
+                                        Nothing
+
+                                updatedEntry =
+                                    { entry | blobObjectUrl = publicBlobUrl }
+                            in
+                            ( { model | page = PublicPage { publicModel | expandedEntry = Just updatedEntry, displayMode = defaultMode } }, Cmd.none )
 
                         MyDataPage myDataModel ->
-                            ( { model | page = MyDataPage { myDataModel | expandedEntry = Just entry, displayMode = defaultMode } }, Cmd.none )
+                            ( { model | page = MyDataPage { myDataModel | expandedEntry = Just entry, displayMode = defaultMode } }, binaryCmd )
 
                         _ ->
                             ( model, Cmd.none )
@@ -545,6 +599,43 @@ update msg model =
 
                 Err err ->
                     handleAuthError model "Failed to load groups." err
+
+        GotBlobUpload success ->
+            if success then
+                case ( model.page, model.token ) of
+                    ( MyDataPage _, Just token ) ->
+                        ( model, Api.fetchMyEntries token )
+
+                    _ ->
+                        ( model, Cmd.none )
+
+            else
+                ( { model | errorMessage = Just "Failed to upload file." }, Cmd.none )
+
+        GotBlobUrl url ->
+            if String.isEmpty url then
+                ( { model | errorMessage = Just "Failed to load file." }, Cmd.none )
+
+            else
+                case model.page of
+                    PublicPage publicModel ->
+                        case publicModel.expandedEntry of
+                            Just ex ->
+                                ( { model | page = PublicPage { publicModel | expandedEntry = Just { ex | blobObjectUrl = Just url } } }, Cmd.none )
+
+                            Nothing ->
+                                ( model, Cmd.none )
+
+                    MyDataPage myDataModel ->
+                        case myDataModel.expandedEntry of
+                            Just ex ->
+                                ( { model | page = MyDataPage { myDataModel | expandedEntry = Just { ex | blobObjectUrl = Just url } } }, Cmd.none )
+
+                            Nothing ->
+                                ( model, Cmd.none )
+
+                    _ ->
+                        ( model, Cmd.none )
 
 
 view : Model -> Browser.Document Msg

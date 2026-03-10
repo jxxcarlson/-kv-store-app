@@ -76,6 +76,10 @@ viewCreateForm form =
                 , option [ value "scripta" ] [ text "scripta" ]
                 , option [ value "json" ] [ text "json" ]
                 , option [ value "html" ] [ text "html" ]
+                , option [ value "pdf" ] [ text "pdf" ]
+                , option [ value "jpg" ] [ text "jpg" ]
+                , option [ value "png" ] [ text "png" ]
+                , option [ value "mp3" ] [ text "mp3" ]
                 ]
             ]
         , div [ class "form-group" ]
@@ -98,16 +102,23 @@ viewCreateForm form =
                 ]
                 []
             ]
-        , div [ class "form-group" ]
-            [ label [] [ text "Value" ]
-            , textarea
-                [ value form.value
-                , onInput (SetCreateField "value")
-                , placeholder "Entry value"
-                , rows 6
+        , if List.member form.dataType [ "pdf", "jpg", "png", "mp3" ] then
+            div [ class "form-group" ]
+                [ label [] [ text "File" ]
+                , input [ type_ "file", id "blob-file-input" ] []
                 ]
-                []
-            ]
+
+          else
+            div [ class "form-group" ]
+                [ label [] [ text "Value" ]
+                , textarea
+                    [ value form.value
+                    , onInput (SetCreateField "value")
+                    , placeholder "Entry value"
+                    , rows 6
+                    ]
+                    []
+                ]
         , button [ class "btn btn-primary", onClick SubmitCreateData ]
             [ text "Create" ]
         ]
@@ -185,7 +196,7 @@ myDataExpandedPanel expandedEntry displayMode =
                     text ""
                   else
                     View.Table.displayModeToggle ex.dataType displayMode
-                , View.Table.display ex.dataType displayMode ex.value
+                , View.Table.display ex.dataType displayMode ex.value ex.blobObjectUrl
                 ]
 
         Nothing ->

@@ -35,7 +35,7 @@ decodeDataEntrySummary =
 
 decodeExpandedEntry : D.Decoder ExpandedEntry
 decodeExpandedEntry =
-    D.map3 ExpandedEntry
+    D.map3 (\k dt v -> { key = k, dataType = dt, value = v, blobObjectUrl = Nothing })
         (D.field "dvrKey" D.string)
         (D.field "dvrDataType" D.string)
         (D.field "dvrValue" D.string)
