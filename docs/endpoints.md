@@ -37,4 +37,5 @@ Servant API. All JSON unless noted.
 |--------|------|------|-------------|
 | GET | `/api/public` | No | List all public data entries (abbreviated: key, data_type, description) |
 | GET | `/api/public?search=term` | No | Search public entries by key/description |
+| GET | `http://localhost:3000/api/public/gilgamesh-met` | No | Retrieve full text by key/description |
 | GET | `/api/public?sort=key\|created\|modified` | No | Sort public entries |

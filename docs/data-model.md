@@ -30,7 +30,7 @@ Four Postgres tables.
 | owner_id | INTEGER NOT NULL REFERENCES users | |
 | group_id | INTEGER REFERENCES groups | Nullable — unassigned data has no group |
 | key | TEXT NOT NULL | Indexed, unique per owner |
-| data_type | TEXT NOT NULL | "csv", "txt", etc. |
+| data_type | TEXT NOT NULL | "csv", "txt", "md", "tex", "scripta", "json", "yaml",  "bib",  "sql", "html"   |
 | created_at | TIMESTAMPTZ DEFAULT now() | |
 | modified_at | TIMESTAMPTZ DEFAULT now() | |
 | properties | TEXT DEFAULT '' | Freeform "date:1929, ..." |

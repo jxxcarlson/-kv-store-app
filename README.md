@@ -14,7 +14,7 @@ Users store key-value data entries (text, CSV, JSON, etc.) and control access vi
 ## Setup
 
 ### Database
-
+x   
 ```bash
 createdb kvstore
 ```
