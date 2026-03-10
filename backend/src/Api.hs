@@ -3,6 +3,7 @@
 
 module Api where
 
+import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Servant
 import Types
@@ -27,6 +28,8 @@ type DataAPI =
   :<|> "data" :> Capture "key" Text :> ReqBody '[JSON] UpdateDataRequest :> Put '[JSON] DataEntrySummary
   :<|> "data" :> Capture "key" Text :> Delete '[JSON] NoContent
   :<|> "data" :> Capture "key" Text :> "group" :> ReqBody '[JSON] AssignGroupRequest :> Put '[JSON] NoContent
+  :<|> "data" :> Capture "key" Text :> "blob" :> ReqBody '[OctetStream] ByteString :> Post '[JSON] NoContent
+  :<|> "data" :> Capture "key" Text :> "blob" :> Get '[OctetStream] (Headers '[Header "Content-Type" Text] ByteString)
 
 type GroupAPI =
        "groups" :> Get '[JSON] [GroupResponse]
@@ -39,6 +42,7 @@ type GroupAPI =
 type PublicDataAPI = "public" :>
   (    QueryParam "search" Text :> QueryParam "sort" Text :> Get '[JSON] [DataEntrySummary]
   :<|> Capture "key" Text :> Get '[JSON] DataValueResponse
+  :<|> Capture "key" Text :> "blob" :> Get '[OctetStream] (Headers '[Header "Content-Type" Text] ByteString)
   )
 
 apiProxy :: Proxy API
