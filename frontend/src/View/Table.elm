@@ -3,11 +3,13 @@ module View.Table exposing (display, displayModeToggle, formatTimestamp, viewTab
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Json.Decode
 import Markdown
 import String
 import Types exposing (..)
 import V3.Compiler
 import V3.Types exposing (Filter(..), Theme(..))
+import V3.Types as VT
 
 
 viewTable : SortField -> SortDirection -> Maybe ExpandedEntry -> DisplayMode -> List DataEntrySummary -> Html Msg
@@ -144,16 +146,40 @@ display dataType mode content =
                     , theme = Light
                     , editCount = 0
                     , width = 500
-                    , showTOC = False
+                    , showTOC = True
                     , sizing = V3.Types.defaultSizingConfig
-                    , maxLevel = 1
+                    , maxLevel = 4
                     }
 
                 output =
                     V3.Compiler.compile params (String.lines content)
+
+                mapMsg =
+                    Html.map
+                        (\compilerMsg ->
+                            case compilerMsg of
+                                VT.SelectId id_ ->
+                                    ScrollToId id_
+
+                                VT.FootnoteClick { targetId } ->
+                                    ScrollToId targetId
+
+                                VT.CitationClick { targetId } ->
+                                    ScrollToId targetId
+
+                                _ ->
+                                    NoOp
+                        )
             in
-            div [ class "content-display rendered-content" ]
-                (List.map (Html.map (\_ -> NoOp)) output.body)
+            div [ class "scripta-layout" ]
+                [ div [ class "content-display rendered-content", id "scripta-content" ]
+                    (List.map mapMsg output.body)
+                , div
+                    [ class "toc-panel"
+                    , preventDefaultOn "click" (Json.Decode.succeed ( NoOp, True ))
+                    ]
+                    (List.map mapMsg output.toc)
+                ]
 
         _ ->
             div [ class "content-display source-content" ]

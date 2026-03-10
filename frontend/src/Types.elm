@@ -166,6 +166,7 @@ type Msg
     | ToggleDisplayMode
       -- Groups
     | GotGroups (Result Http.Error (List GroupInfo))
+    | ScrollToId String
 
 
 type alias AuthResponse =

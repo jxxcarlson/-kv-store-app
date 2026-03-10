@@ -25,6 +25,15 @@
             localStorage.removeItem('kvstore-token');
         });
 
+        app.ports.scrollToElement.subscribe(function(id) {
+            requestAnimationFrame(function() {
+                var el = document.getElementById(id);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
         // KaTeX + math-text custom element for Scripta math rendering
         function initKatex() {
             class MathText extends HTMLElement {

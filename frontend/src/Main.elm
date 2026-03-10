@@ -23,6 +23,9 @@ port saveToken : String -> Cmd msg
 port removeToken : () -> Cmd msg
 
 
+port scrollToElement : String -> Cmd msg
+
+
 type alias Flags =
     Maybe String
 
@@ -135,6 +138,17 @@ routeToPage route =
             NotFoundPage
 
 
+isPage : Page -> Route -> Bool
+isPage page route =
+    case ( page, route ) of
+        ( PublicPage _, PublicRoute ) -> True
+        ( LoginPage _, LoginRoute ) -> True
+        ( RegisterPage _, RegisterRoute ) -> True
+        ( MyDataPage _, MyDataRoute ) -> True
+        ( GroupsPage _, GroupsRoute ) -> True
+        _ -> False
+
+
 handleAuthError : Model -> String -> Http.Error -> ( Model, Cmd Msg )
 handleAuthError model fallbackMsg error =
     case error of
@@ -156,7 +170,12 @@ update msg model =
         UrlRequested urlRequest ->
             case urlRequest of
                 Browser.Internal url ->
-                    ( model, Nav.pushUrl model.key (Url.toString url) )
+                    if url.path == model.url.path then
+                        -- Fragment-only change (e.g. TOC links) — don't navigate away
+                        ( model, Cmd.none )
+
+                    else
+                        ( model, Nav.pushUrl model.key (Url.toString url) )
 
                 Browser.External href ->
                     ( model, Nav.load href )
@@ -173,6 +192,9 @@ update msg model =
 
         NoOp ->
             ( model, Cmd.none )
+
+        ScrollToId id ->
+            ( model, scrollToElement id )
 
         -- Auth: Login form
         SetLoginEmail email ->
@@ -519,24 +541,24 @@ update msg model =
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = "KV Store"
+    { title = "Key-Value Store"
     , body =
         [ div [ class "app" ]
             [ nav [ class "navbar" ]
-                [ a [ href "/" ] [ text "KV Store" ]
+                [ a [ href "/" ] [ text "Key-Value Store" ]
                 , div [ class "nav-links" ]
-                    [ a [ href "/" ] [ text "Public" ]
+                    [ a [ href "/", classList [ ( "nav-active", isPage model.page PublicRoute ) ] ] [ text "Public" ]
                     , case model.token of
                         Nothing ->
                             span []
-                                [ a [ href "/login" ] [ text "Login" ]
-                                , a [ href "/register" ] [ text "Register" ]
+                                [ a [ href "/login", classList [ ( "nav-active", isPage model.page LoginRoute ) ] ] [ text "Login" ]
+                                , a [ href "/register", classList [ ( "nav-active", isPage model.page RegisterRoute ) ] ] [ text "Register" ]
                                 ]
 
                         Just _ ->
                             span []
-                                [ a [ href "/my-data" ] [ text "My Data" ]
-                                , a [ href "/groups" ] [ text "Groups" ]
+                                [ a [ href "/my-data", classList [ ( "nav-active", isPage model.page MyDataRoute ) ] ] [ text "My Data" ]
+                                , a [ href "/groups", classList [ ( "nav-active", isPage model.page GroupsRoute ) ] ] [ text "Groups" ]
                                 , button [ onClick Logout ] [ text "Logout" ]
                                 ]
                     ]
