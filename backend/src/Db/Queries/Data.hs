@@ -8,8 +8,11 @@ module Db.Queries.Data
   , deleteData
   , assignGroup
   , unassignGroup
+  , setBlob
+  , getBlob
   ) where
 
+import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.Time.Clock (getCurrentTime)
 import Database.Persist
@@ -52,3 +55,15 @@ assignGroup pool entryId groupId =
 unassignGroup :: ConnectionPool -> Key DataEntry -> IO ()
 unassignGroup pool entryId =
   runSqlPool (update entryId [DataEntryGroupId =. Nothing]) pool
+
+setBlob :: ConnectionPool -> Key DataEntry -> ByteString -> IO ()
+setBlob pool entryId blob = do
+  now <- getCurrentTime
+  runSqlPool (update entryId [DataEntryBlobValue =. Just blob, DataEntryModifiedAt =. now]) pool
+
+getBlob :: ConnectionPool -> Key DataEntry -> IO (Maybe ByteString)
+getBlob pool entryId =
+  runSqlPool (do
+    mEntry <- get entryId
+    return $ mEntry >>= dataEntryBlobValue
+  ) pool

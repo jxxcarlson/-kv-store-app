@@ -5,6 +5,7 @@
 module Api.Data (dataHandlers) where
 
 import Control.Monad.IO.Class (liftIO)
+import Data.ByteString (ByteString)
 import Data.Text (Text, stripPrefix)
 import Database.Persist (Entity(..), entityKey, entityVal)
 import Database.Persist.Postgresql (ConnectionPool, toSqlKey, fromSqlKey)
@@ -38,6 +39,8 @@ dataHandlers config pool authHeader =
   :<|> updateDataHandler config pool authHeader
   :<|> deleteDataHandler config pool authHeader
   :<|> assignGroupHandler config pool authHeader
+  :<|> uploadBlobHandler config pool authHeader
+  :<|> downloadBlobHandler config pool authHeader
 
 -- | List all data entries for the authenticated user
 listDataHandler :: AppConfig -> ConnectionPool -> Text -> Handler [DataEntrySummary]
@@ -112,6 +115,36 @@ assignGroupHandler config pool authHeader key req = do
           let groupKey = toSqlKey (fromIntegral (agrGroupId req)) :: Key Group
           liftIO $ Q.assignGroup pool entryId groupKey
       return NoContent
+
+contentTypeFor :: Text -> Text
+contentTypeFor dt = case dt of
+  "pdf" -> "application/pdf"
+  "jpg" -> "image/jpeg"
+  "png" -> "image/png"
+  "mp3" -> "audio/mpeg"
+  _     -> "application/octet-stream"
+
+uploadBlobHandler :: AppConfig -> ConnectionPool -> Text -> Text -> ByteString -> Handler NoContent
+uploadBlobHandler config pool authHeader key blob = do
+  userId <- extractUserId config authHeader
+  mEntry <- liftIO $ Q.getDataByKey pool userId key
+  case mEntry of
+    Nothing -> throwError err404 { errBody = "Data entry not found" }
+    Just (Entity entryId _) -> do
+      liftIO $ Q.setBlob pool entryId blob
+      return NoContent
+
+downloadBlobHandler :: AppConfig -> ConnectionPool -> Text -> Text -> Handler (Headers '[Header "Content-Type" Text] ByteString)
+downloadBlobHandler config pool authHeader key = do
+  userId <- extractUserId config authHeader
+  mEntry <- liftIO $ Q.getDataByKey pool userId key
+  case mEntry of
+    Nothing -> throwError err404 { errBody = "Data entry not found" }
+    Just (Entity entryId entry) -> do
+      mBlob <- liftIO $ Q.getBlob pool entryId
+      case mBlob of
+        Nothing -> throwError err404 { errBody = "No blob data" }
+        Just blob -> return $ addHeader (contentTypeFor (dataEntryDataType entry)) blob
 
 -- | Convert a DataEntry to a DataEntrySummary
 toSummary :: DataEntry -> DataEntrySummary

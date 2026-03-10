@@ -1,8 +1,11 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Api.Public (publicHandlers) where
 
 import Control.Monad.IO.Class (liftIO)
+import Data.ByteString (ByteString)
 import Data.List (sortBy)
 import Data.Ord (comparing, Down(..))
 import Data.Text (Text, toCaseFold, isInfixOf)
@@ -15,7 +18,7 @@ import Db.Schema
 import Types (DataEntrySummary(..), DataValueResponse(..))
 
 publicHandlers :: ConnectionPool -> ServerT PublicDataAPI Handler
-publicHandlers pool = listPublicHandler pool :<|> getPublicValueHandler pool
+publicHandlers pool = listPublicHandler pool :<|> getPublicValueHandler pool :<|> getPublicBlobHandler pool
 
 listPublicHandler :: ConnectionPool -> Maybe Text -> Maybe Text -> Handler [DataEntrySummary]
 listPublicHandler pool mSearch mSort = do
@@ -50,6 +53,27 @@ getPublicValueHandler pool key = do
         , dvrDataType = dataEntryDataType entry
         , dvrValue    = dataEntryValue entry
         }
+    _ -> throwError err404 { errBody = "Public entry not found" }
+
+contentTypeFor :: Text -> Text
+contentTypeFor dt = case dt of
+  "pdf" -> "application/pdf"
+  "jpg" -> "image/jpeg"
+  "png" -> "image/png"
+  "mp3" -> "audio/mpeg"
+  _     -> "application/octet-stream"
+
+getPublicBlobHandler :: ConnectionPool -> Text -> Handler (Headers '[Header "Content-Type" Text] ByteString)
+getPublicBlobHandler pool key = do
+  let publicGroupKey = toSqlKey 1 :: Key Group
+  entries <- liftIO $ runSqlPool
+    (selectList [DataEntryGroupId ==. Just publicGroupKey, DataEntryKey ==. key] [])
+    pool
+  case entries of
+    [Entity _ entry] ->
+      case dataEntryBlobValue entry of
+        Nothing -> throwError err404 { errBody = "No blob data" }
+        Just blob -> return $ addHeader (contentTypeFor (dataEntryDataType entry)) blob
     _ -> throwError err404 { errBody = "Public entry not found" }
 
 toSummary :: DataEntry -> DataEntrySummary
