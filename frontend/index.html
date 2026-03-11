@@ -10,7 +10,8 @@
 </head>
 <body>
     <div id="app"></div>
-    <script src="config.js"></script>
+    <script>window.API_BASE = window.API_BASE || "";</script>
+    <script src="config.js" onerror=""></script>
     <script src="elm.js"></script>
     <script>
         var apiBase = window.API_BASE || "";
