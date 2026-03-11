@@ -27,11 +27,12 @@ viewTable sortField sortDirection expandedEntry displayMode entries =
                 Nothing ->
                     sortedEntries
     in
-    div []
+    div [ class "data-table-wrapper" ]
         [ table [ class "data-table" ]
             [ thead []
                 [ tr []
-                    [ sortableHeader "Key" SortByKey sortField sortDirection
+                    [ th [ class "col-index" ] [ text "#" ]
+                    , sortableHeader "Key" SortByKey sortField sortDirection
                     , th [] [ text "Type" ]
                     , th [] [ text "Description" ]
                     , sortableHeader "Created" SortByCreated sortField sortDirection
@@ -39,16 +40,17 @@ viewTable sortField sortDirection expandedEntry displayMode entries =
                     ]
                 ]
             , tbody []
-                (List.map (viewRow expandedEntry) visibleEntries)
+                (List.indexedMap (viewRow expandedEntry) visibleEntries)
             ]
         , expandedPanel expandedEntry displayMode
         ]
 
 
-viewRow : Maybe ExpandedEntry -> DataEntrySummary -> Html Msg
-viewRow expandedEntry entry =
+viewRow : Maybe ExpandedEntry -> Int -> DataEntrySummary -> Html Msg
+viewRow expandedEntry index entry =
     tr [ onClick (ToggleExpandEntry entry.key), style "cursor" "pointer" ]
-        [ td [] [ text entry.key ]
+        [ td [ class "col-index" ] [ text (String.fromInt (index + 1)) ]
+        , td [] [ text entry.key ]
         , td [] [ text entry.dataType ]
         , td [] [ text entry.description ]
         , td [] [ text (formatTimestamp entry.createdAt) ]

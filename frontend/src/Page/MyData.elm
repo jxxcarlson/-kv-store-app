@@ -16,7 +16,7 @@ view model =
     in
     div [ class "my-data-page" ]
         [ div [ class "page-header" ]
-            [ h2 [] [ text "My Data" ]
+            [ h2 [] [ text ("My Data (" ++ String.fromInt (List.length filtered) ++ ")") ]
             , View.Search.viewSearch model.searchTerm
             , button [ class "btn btn-primary", onClick ToggleCreateForm ]
                 [ text
@@ -129,11 +129,12 @@ viewEntriesTable expandedEntry displayMode editingValue entries =
                     Nothing ->
                         entries
         in
-        div []
+        div [ class "data-table-wrapper" ]
             [ table [ class "data-table" ]
                 [ thead []
                     [ tr []
-                        [ th [] [ text "Key" ]
+                        [ th [ class "col-index" ] [ text "#" ]
+                        , th [] [ text "Key" ]
                         , th [] [ text "Type" ]
                         , th [] [ text "Description" ]
                         , th [] [ text "Created" ]
@@ -141,16 +142,17 @@ viewEntriesTable expandedEntry displayMode editingValue entries =
                         , th [] [ text "Actions" ]
                         ]
                     ]
-                , tbody [] (List.map (viewEntryRow expandedEntry) visibleEntries)
+                , tbody [] (List.indexedMap (viewEntryRow expandedEntry) visibleEntries)
                 ]
             , myDataExpandedPanel expandedEntry displayMode editingValue
             ]
 
 
-viewEntryRow : Maybe ExpandedEntry -> DataEntrySummary -> Html Msg
-viewEntryRow expandedEntry entry =
+viewEntryRow : Maybe ExpandedEntry -> Int -> DataEntrySummary -> Html Msg
+viewEntryRow expandedEntry index entry =
     tr [ onClick (ToggleExpandEntry entry.key), style "cursor" "pointer" ]
-        [ td [] [ text entry.key ]
+        [ td [ class "col-index" ] [ text (String.fromInt (index + 1)) ]
+        , td [] [ text entry.key ]
         , td [] [ text entry.dataType ]
         , td [] [ text entry.description ]
         , td [] [ text (View.Table.formatTimestamp entry.createdAt) ]

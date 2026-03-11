@@ -8,7 +8,9 @@ html, body {
     overflow: hidden;
 }
 
-.app { max-width: 960px; margin: 0 auto; padding: 20px; height: 100%; overflow: hidden; }
+.app { max-width: 960px; margin: 0 auto; padding: 20px; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+
+.content { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 
 .navbar {
     display: flex;
@@ -25,7 +27,9 @@ html, body {
 
 .nav-links { display: flex; align-items: center; gap: 8px; }
 
-.content { min-height: 400px; }
+.public-page, .my-data-page { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.page-header { flex-shrink: 0; }
+.data-table-wrapper { flex: 1; min-height: 0; overflow-y: auto; }
 
 table { width: 100%; border-collapse: collapse; margin-top: 16px; }
 th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #ddd; }
@@ -102,6 +106,7 @@ label { font-weight: 600; display: block; margin-top: 8px; }
 .expanded-content-noscroll { overflow: hidden; padding-bottom: 0; }
 .iframe-content { padding-bottom: 0; }
 
+.col-index { width: 2em; text-align: right; color: #999; }
 .actions { display: flex; gap: 8px; white-space: nowrap; }
 
 .scripta-header {

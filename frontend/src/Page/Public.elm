@@ -15,7 +15,7 @@ view publicModel =
     in
     div [ class "public-page" ]
         [ div [ class "page-header" ]
-            [ h2 [] [ text "Public Data" ]
+            [ h2 [] [ text ("Public Data (" ++ String.fromInt (List.length filtered) ++ ")") ]
             , View.Search.viewSearch publicModel.searchTerm
             ]
         , View.Table.viewTable publicModel.sortBy publicModel.sortDirection publicModel.expandedEntry publicModel.displayMode filtered
