@@ -25,8 +25,8 @@ module Markdown.Inline
 
 -}
 
-import Html exposing (Html, a, br, code, em, img, node, strong, text)
-import Html.Attributes exposing (alt, attribute, href, src, title)
+import Html exposing (Html, a, br, code, div, em, img, node, strong, text)
+import Html.Attributes exposing (alt, attribute, href, src, style, title)
 import Markdown.Helpers exposing (Attribute)
 
 
@@ -41,6 +41,7 @@ import Markdown.Helpers exposing (Attribute)
   - **Text** | _Text_
   - **HardLineBreak**
   - **CodeInline** | _Code_
+  - **InlineMath** | _LaTeX content_
   - **Link** | _Url_ | _Maybe Title_ | _Inlines_
   - **Image** | _Source_ | _Maybe Title_ | _Inlines_
   - **HtmlInline** | _Tag_ | _List ( Attribute, Maybe Value )_ | _Inlines_
@@ -52,6 +53,7 @@ type Inline i
     = Text String
     | HardLineBreak
     | CodeInline String
+    | InlineMath String
     | Link String (Maybe String) (List (Inline i))
     | Image String (Maybe String) (List (Inline i))
     | HtmlInline String (List ( String, Maybe String )) (List (Inline i))
@@ -116,6 +118,13 @@ defaultHtml customTransformer inline =
 
         CodeInline codeStr ->
             code [] [ text codeStr ]
+
+        InlineMath content ->
+            node "math-text"
+                [ attribute "content" content
+                , attribute "display" "false"
+                ]
+                []
 
         Link url maybeTitle inlines ->
             case maybeTitle of
@@ -216,6 +225,9 @@ extractTextHelp inline text =
             text ++ " "
 
         CodeInline str ->
+            text ++ str
+
+        InlineMath str ->
             text ++ str
 
         Link _ _ inlines ->

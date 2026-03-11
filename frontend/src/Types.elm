@@ -55,6 +55,7 @@ type alias MyDataModel =
     , expandedEntry : Maybe ExpandedEntry
     , displayMode : DisplayMode
     , searchTerm : String
+    , editingValue : Maybe String
     }
 
 
@@ -171,6 +172,12 @@ type Msg
     | ScrollToId String
     | GotBlobUpload Bool
     | GotBlobUrl String
+      -- Editing
+    | StartEditing String
+    | SetEditValue String
+    | SaveEdit
+    | CancelEdit
+    | GotSaveResponse (Result Http.Error ())
 
 
 type alias AuthResponse =

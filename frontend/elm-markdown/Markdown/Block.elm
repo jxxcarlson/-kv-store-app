@@ -75,6 +75,7 @@ type Block b i
     | List ListBlock (List (List (Block b i)))
     | PlainInlines (List (Inline i))
     | Table (List Alignment) (List (List (List (Inline i))))
+    | DisplayMath Bool String
     | Custom b (List (Block b i))
 
 
@@ -186,6 +187,20 @@ incorporateLine rawLine ast =
             continueOrCloseCodeFence fence code rawLine
                 |> (\a -> (::) a astTail)
 
+        (DisplayMath True content) :: astTail ->
+            if isDisplayMathClose rawLine then
+                DisplayMath False content :: astTail
+
+            else
+                DisplayMath True
+                    (if String.isEmpty content then
+                        String.trim rawLine
+
+                     else
+                        content ++ "\n" ++ String.trim rawLine
+                    )
+                    :: astTail
+
         (Table alignments rows) :: astTail ->
             if isTableRow rawLine then
                 Table alignments (rows ++ [ parseTableRow rawLine ]) :: astTail
@@ -225,6 +240,7 @@ parseRawLine rawLine ast =
     checkBlankLine ( rawLine, ast )
         |> ifError checkIndentedCode
         |> ifError checkOpenCodeFenceLine
+        |> ifError checkDisplayMathLine
         |> ifError checkSetextHeadingLine
         |> ifError checkATXHeadingLine
         |> ifError checkBlockQuote
@@ -899,6 +915,36 @@ formatParagraphLine rawParagraph =
 
 
 
+-- Display Math
+
+
+displayMathOpenRegex : Regex
+displayMathOpenRegex =
+    Regex.fromString "^\\s{0,3}\\$\\$\\s*$"
+        |> Maybe.withDefault Regex.never
+
+
+displayMathCloseRegex : Regex
+displayMathCloseRegex =
+    Regex.fromString "^\\s{0,3}\\$\\$\\s*$"
+        |> Maybe.withDefault Regex.never
+
+
+checkDisplayMathLine : ( String, List (Block b i) ) -> Result ( String, List (Block b i) ) (List (Block b i))
+checkDisplayMathLine ( rawLine, ast ) =
+    if Regex.contains displayMathOpenRegex rawLine then
+        Ok (DisplayMath True "" :: ast)
+
+    else
+        Err ( rawLine, ast )
+
+
+isDisplayMathClose : String -> Bool
+isDisplayMathClose rawLine =
+    Regex.contains displayMathCloseRegex rawLine
+
+
+
 -- Table
 
 
@@ -1519,6 +1565,16 @@ defaultHtml customHtml customInlineHtml block =
 
                 [] ->
                     []
+
+        DisplayMath _ content ->
+            [ div [ style "text-align" "center", style "margin" "1em 0" ]
+                [ node "math-text"
+                    [ Html.Attributes.attribute "content" content
+                    , Html.Attributes.attribute "display" "true"
+                    ]
+                    []
+                ]
+            ]
 
         Custom customBlock blocks ->
             List.map blockToHtml blocks

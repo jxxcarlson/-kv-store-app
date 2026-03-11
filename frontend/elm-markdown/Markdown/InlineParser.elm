@@ -167,6 +167,7 @@ type alias Token =
 
 type Meaning
     = CodeToken Bool -- isEscaped
+    | MathToken Bool -- isEscaped
     | LinkOpenToken Bool -- isActive
     | ImageOpenToken
     | CharToken Char
@@ -283,6 +284,7 @@ tokenize model =
     { model
         | tokens =
             findCodeTokens model.rawText
+                |> (++) (findMathTokens model.rawText)
                 |> (++) (findAsteriskEmphasisTokens model.rawText)
                 |> (++) (findUnderlineEmphasisTokens model.rawText)
                 |> (++) (findLinkImageOpenTokens model.rawText)
@@ -328,6 +330,46 @@ regMatchToCodeToken regMatch =
                 , length = String.length backtick
                 , meaning = CodeToken (not (isEven backslashesLength))
                 }
+
+        _ ->
+            Nothing
+
+
+
+-- Math Tokens
+
+
+findMathTokens : String -> List Token
+findMathTokens str =
+    Regex.find mathTokenRegex str
+        |> List.filterMap regMatchToMathToken
+
+
+mathTokenRegex : Regex
+mathTokenRegex =
+    Regex.fromString "(\\\\*)(\\$+)"
+        |> Maybe.withDefault Regex.never
+
+
+regMatchToMathToken : Regex.Match -> Maybe Token
+regMatchToMathToken regMatch =
+    case regMatch.submatches of
+        maybeBackslashes :: (Just dollar) :: _ ->
+            let
+                backslashesLength =
+                    Maybe.map String.length maybeBackslashes
+                        |> Maybe.withDefault 0
+            in
+            -- Only match single $ (not $$ which is display math at block level)
+            if String.length dollar == 1 then
+                Just
+                    { index = regMatch.index + backslashesLength
+                    , length = 1
+                    , meaning = MathToken (not (isEven backslashesLength))
+                    }
+
+            else
+                Nothing
 
         _ ->
             Nothing
@@ -806,6 +848,7 @@ type Type
     = NormalType
     | HardLineBreakType
     | CodeType
+    | InlineMathType
     | AutolinkType ( String, String ) -- ( Text, Url )
     | LinkType ( String, Maybe String ) -- ( Url, Maybe Title )
     | ImageType ( String, Maybe String ) -- ( Src, Maybe Title )
@@ -916,6 +959,19 @@ codeAutolinkTypeHtmlTagTTM ( tokens, model ) =
                         |> (\b -> ( tokensTail, b ))
                         |> codeAutolinkTypeHtmlTagTTM
 
+                MathToken isEscaped ->
+                    if isEscaped then
+                        codeAutolinkTypeHtmlTagTTM
+                            ( tokensTail, addToken model token )
+
+                    else
+                        model.tokens
+                            |> findToken (isMathTokenPair token)
+                            |> Maybe.map (mathToMatch token model)
+                            |> Maybe.withDefault (addToken model token)
+                            |> (\b -> ( tokensTail, b ))
+                            |> codeAutolinkTypeHtmlTagTTM
+
                 RightAngleBracket isEscaped ->
                     model.tokens
                         |> findToken
@@ -977,6 +1033,36 @@ codeToMatch closeToken model ( openToken, _, remainTokens ) =
                 cleanWhitespaces
                 CodeType
                 updtOpenToken
+                closeToken
+                []
+                :: model.matches
+        , tokens = remainTokens
+    }
+
+
+
+-- Math Helpers
+
+
+isMathTokenPair : Token -> Token -> Bool
+isMathTokenPair closeToken openToken =
+    case openToken.meaning of
+        MathToken isEscaped ->
+            not isEscaped
+
+        _ ->
+            False
+
+
+mathToMatch : Token -> Parser -> ( Token, List Token, List Token ) -> Parser
+mathToMatch closeToken model ( openToken, _, remainTokens ) =
+    { model
+        | matches =
+            tokenPairToMatch
+                model
+                String.trim
+                InlineMathType
+                openToken
                 closeToken
                 []
                 :: model.matches
@@ -1818,6 +1904,9 @@ matchToInline (Match match) =
 
         CodeType ->
             CodeInline match.text
+
+        InlineMathType ->
+            InlineMath match.text
 
         AutolinkType ( text, url ) ->
             Link url Nothing [ Text text ]

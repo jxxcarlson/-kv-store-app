@@ -10,20 +10,8 @@ import View.Table
 view : PublicModel -> Html Msg
 view publicModel =
     let
-        term =
-            String.toLower publicModel.searchTerm
-
         filtered =
-            if String.isEmpty term then
-                publicModel.entries
-
-            else
-                List.filter
-                    (\entry ->
-                        String.contains term (String.toLower entry.key)
-                            || String.contains term (String.toLower entry.description)
-                    )
-                    publicModel.entries
+            View.Search.filterEntries publicModel.searchTerm publicModel.entries
     in
     div [ class "public-page" ]
         [ div [ class "page-header" ]

@@ -11,20 +11,8 @@ import View.Table
 view : MyDataModel -> Html Msg
 view model =
     let
-        term =
-            String.toLower model.searchTerm
-
         filtered =
-            if String.isEmpty term then
-                model.entries
-
-            else
-                List.filter
-                    (\entry ->
-                        String.contains term (String.toLower entry.key)
-                            || String.contains term (String.toLower entry.description)
-                    )
-                    model.entries
+            View.Search.filterEntries model.searchTerm model.entries
     in
     div [ class "my-data-page" ]
         [ div [ class "page-header" ]
@@ -45,7 +33,7 @@ view model =
 
           else
             text ""
-        , viewEntriesTable model.expandedEntry model.displayMode filtered
+        , viewEntriesTable model.expandedEntry model.displayMode model.editingValue filtered
         ]
 
 
@@ -126,8 +114,8 @@ viewCreateForm form =
         ]
 
 
-viewEntriesTable : Maybe ExpandedEntry -> DisplayMode -> List DataEntrySummary -> Html Msg
-viewEntriesTable expandedEntry displayMode entries =
+viewEntriesTable : Maybe ExpandedEntry -> DisplayMode -> Maybe String -> List DataEntrySummary -> Html Msg
+viewEntriesTable expandedEntry displayMode editingValue entries =
     if List.isEmpty entries then
         p [ class "empty-message" ] [ text "You don't have any data entries yet." ]
 
@@ -155,7 +143,7 @@ viewEntriesTable expandedEntry displayMode entries =
                     ]
                 , tbody [] (List.map (viewEntryRow expandedEntry) visibleEntries)
                 ]
-            , myDataExpandedPanel expandedEntry displayMode
+            , myDataExpandedPanel expandedEntry displayMode editingValue
             ]
 
 
@@ -181,8 +169,13 @@ viewEntryRow expandedEntry entry =
         ]
 
 
-myDataExpandedPanel : Maybe ExpandedEntry -> DisplayMode -> Html Msg
-myDataExpandedPanel expandedEntry displayMode =
+isTextType : String -> Bool
+isTextType dt =
+    List.member dt [ "md", "tex", "scripta", "json", "txt", "html" ]
+
+
+myDataExpandedPanel : Maybe ExpandedEntry -> DisplayMode -> Maybe String -> Html Msg
+myDataExpandedPanel expandedEntry displayMode editingValue =
     case expandedEntry of
         Just ex ->
             let
@@ -193,13 +186,41 @@ myDataExpandedPanel expandedEntry displayMode =
                     else
                         ""
             in
-            div [ class ("expanded-content" ++ extraClass) ]
-                [ if ex.dataType == "scripta" && displayMode == Rendered then
-                    text ""
-                  else
-                    View.Table.displayModeToggle ex.dataType displayMode
-                , View.Table.display ex.dataType displayMode ex.value ex.blobObjectUrl
-                ]
+            case editingValue of
+                Just val ->
+                    div [ class "expanded-content" ]
+                        [ div [ class "edit-controls" ]
+                            [ button [ class "btn btn-primary", onClick SaveEdit ] [ text "Save" ]
+                            , button [ class "btn", onClick CancelEdit ] [ text "Cancel" ]
+                            ]
+                        , textarea
+                            [ class "edit-textarea"
+                            , value val
+                            , onInput SetEditValue
+                            , style "width" "100%"
+                            , style "height" "calc(100vh - 320px)"
+                            , style "font-family" "monospace"
+                            , style "font-size" "14px"
+                            , style "padding" "8px"
+                            , style "resize" "vertical"
+                            ]
+                            []
+                        ]
+
+                Nothing ->
+                    div [ class ("expanded-content" ++ extraClass) ]
+                        [ div [ class "content-toolbar" ]
+                            [ if ex.dataType == "scripta" && displayMode == Rendered then
+                                text ""
+                              else
+                                View.Table.displayModeToggle ex.dataType displayMode
+                            , if isTextType ex.dataType then
+                                button [ class "btn btn-small", onClick (StartEditing ex.value) ] [ text "Edit" ]
+                              else
+                                text ""
+                            ]
+                        , View.Table.display ex.dataType displayMode ex.value ex.blobObjectUrl
+                        ]
 
         Nothing ->
             text ""

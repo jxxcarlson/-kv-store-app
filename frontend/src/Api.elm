@@ -236,6 +236,27 @@ fetchPublicEntryValue apiBase key =
         }
 
 
+updateDataEntry : String -> String -> String -> String -> Cmd Msg
+updateDataEntry apiBase token key newValue =
+    Http.request
+        { method = "PUT"
+        , headers = [ authHeader token ]
+        , url = apiBase ++ "/api/data/" ++ key
+        , body =
+            Http.jsonBody
+                (E.object
+                    [ ( "udrDataType", E.null )
+                    , ( "udrProperties", E.null )
+                    , ( "udrDescription", E.null )
+                    , ( "udrValue", E.string newValue )
+                    ]
+                )
+        , expect = Http.expectWhatever GotSaveResponse
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
 fetchEntryValue : String -> String -> String -> Cmd Msg
 fetchEntryValue apiBase token key =
     Http.request

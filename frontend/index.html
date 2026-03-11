@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KV Store</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-size='28' font-weight='bold' fill='yellow'>KV</text></svg>">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 </head>
 <body>
     <div id="app"></div>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script>window.API_BASE = window.API_BASE || "";</script>
     <script src="config.js" onerror=""></script>
     <script src="elm.js"></script>
@@ -70,38 +72,50 @@
             });
         });
 
-        // KaTeX + math-text custom element for Scripta math rendering
+
+        <!-- KaTeX CSS (needed for page styling) -->
+
+
+        // KaTeX + math-text custom element for Scripta and Markdown math rendering
+        // Supports both HTML attributes (used by Markdown renderer) and JS properties (used by Scripta compiler)
         function initKatex() {
             class MathText extends HTMLElement {
+                static get observedAttributes() {
+                    return ['content', 'display'];
+                }
+
                 constructor() {
                     super();
-                    this.attachShadow({mode: "open"});
+                    this.attachShadow({ mode: 'open' });
                     this._content = '';
                     this._display = false;
                 }
-                connectedCallback() {
-                    this._upgradeProperty('content');
-                    this._upgradeProperty('display');
+
+                attributeChangedCallback() {
                     this._render();
                 }
-                _upgradeProperty(prop) {
-                    if (this.hasOwnProperty(prop)) {
-                        let value = this[prop];
-                        delete this[prop];
-                        this[prop] = value;
-                    }
+
+                connectedCallback() {
+                    this._render();
                 }
+
                 set content(val) { this._content = val; if (this.isConnected) this._render(); }
-                get content() { return this._content; }
+                get content() { return this._content || this.getAttribute('content') || ''; }
+
                 set display(val) { this._display = val; if (this.isConnected) this._render(); }
                 get display() { return this._display; }
+
                 _render() {
-                    if (!this._content) return;
-                    this.shadowRoot.innerHTML = katex.renderToString(
-                        this._content,
-                        { throwOnError: false, displayMode: this._display, trust: true }
-                    );
-                    let link = document.createElement('link');
+                    var content = this._content || this.getAttribute('content');
+                    if (!content) return;
+                    var displayMode = this._display || this.getAttribute('display') === 'true';
+                    this.shadowRoot.innerHTML =
+                        katex.renderToString(content, {
+                            throwOnError: false,
+                            displayMode: displayMode,
+                            trust: true
+                        });
+                    var link = document.createElement('link');
                     link.setAttribute('rel', 'stylesheet');
                     link.setAttribute('href', 'https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css');
                     this.shadowRoot.appendChild(link);

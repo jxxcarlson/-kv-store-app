@@ -150,7 +150,7 @@ routeToPage route =
             RegisterPage { name = "", email = "", password = "" }
 
         MyDataRoute ->
-            MyDataPage { entries = [], showCreateForm = False, createForm = emptyCreateForm, expandedEntry = Nothing, displayMode = Raw, searchTerm = "" }
+            MyDataPage { entries = [], showCreateForm = False, createForm = emptyCreateForm, expandedEntry = Nothing, displayMode = Raw, searchTerm = "", editingValue = Nothing }
 
         GroupsRoute ->
             GroupsPage { groups = [] }
@@ -639,6 +639,63 @@ update msg model =
 
                     _ ->
                         ( model, Cmd.none )
+
+        StartEditing currentValue ->
+            case model.page of
+                MyDataPage myDataModel ->
+                    ( { model | page = MyDataPage { myDataModel | editingValue = Just currentValue } }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        SetEditValue val ->
+            case model.page of
+                MyDataPage myDataModel ->
+                    ( { model | page = MyDataPage { myDataModel | editingValue = Just val } }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        CancelEdit ->
+            case model.page of
+                MyDataPage myDataModel ->
+                    ( { model | page = MyDataPage { myDataModel | editingValue = Nothing } }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        SaveEdit ->
+            case ( model.page, model.token ) of
+                ( MyDataPage myDataModel, Just token ) ->
+                    case ( myDataModel.expandedEntry, myDataModel.editingValue ) of
+                        ( Just entry, Just newValue ) ->
+                            ( model, Api.updateDataEntry model.apiBase token entry.key newValue )
+
+                        _ ->
+                            ( model, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotSaveResponse result ->
+            case ( model.page, model.token ) of
+                ( MyDataPage myDataModel, Just token ) ->
+                    case result of
+                        Ok _ ->
+                            case myDataModel.expandedEntry of
+                                Just entry ->
+                                    ( { model | page = MyDataPage { myDataModel | editingValue = Nothing } }
+                                    , Api.fetchEntryValue model.apiBase token entry.key
+                                    )
+
+                                Nothing ->
+                                    ( { model | page = MyDataPage { myDataModel | editingValue = Nothing } }, Cmd.none )
+
+                        Err _ ->
+                            ( { model | errorMessage = Just "Failed to save changes." }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
 
 
 view : Model -> Browser.Document Msg
