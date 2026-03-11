@@ -40,7 +40,9 @@ port gotBlobUrl : (String -> msg) -> Sub msg
 
 
 type alias Flags =
-    Maybe String
+    { token : Maybe String
+    , apiBase : String
+    }
 
 
 main : Program Flags Model Msg
@@ -64,7 +66,7 @@ init : Flags -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
         token =
-            case flags of
+            case flags.token of
                 Just t ->
                     if String.isEmpty t then
                         Nothing
@@ -84,24 +86,25 @@ init flags url key =
             , page = routeToPage route
             , token = token
             , errorMessage = Nothing
+            , apiBase = flags.apiBase
             }
 
         cmd =
-            cmdForRoute route token
+            cmdForRoute flags.apiBase route token
     in
     ( model, cmd )
 
 
-cmdForRoute : Route -> Maybe String -> Cmd Msg
-cmdForRoute route token =
+cmdForRoute : String -> Route -> Maybe String -> Cmd Msg
+cmdForRoute apiBase route token =
     case route of
         PublicRoute ->
-            Api.fetchPublicEntries Nothing Nothing
+            Api.fetchPublicEntries apiBase Nothing Nothing
 
         MyDataRoute ->
             case token of
                 Just t ->
-                    Api.fetchMyEntries t
+                    Api.fetchMyEntries apiBase t
 
                 Nothing ->
                     Cmd.none
@@ -109,7 +112,7 @@ cmdForRoute route token =
         GroupsRoute ->
             case token of
                 Just t ->
-                    Api.fetchGroups t
+                    Api.fetchGroups apiBase t
 
                 Nothing ->
                     Cmd.none
@@ -204,7 +207,7 @@ update msg model =
                     parseRoute url
 
                 cmd =
-                    cmdForRoute route model.token
+                    cmdForRoute model.apiBase route model.token
             in
             ( { model | url = url, page = routeToPage route, errorMessage = Nothing }, cmd )
 
@@ -234,7 +237,7 @@ update msg model =
         SubmitLogin ->
             case model.page of
                 LoginPage loginModel ->
-                    ( { model | errorMessage = Nothing }, Api.login loginModel )
+                    ( { model | errorMessage = Nothing }, Api.login model.apiBase loginModel )
 
                 _ ->
                     ( model, Cmd.none )
@@ -267,7 +270,7 @@ update msg model =
         SubmitRegister ->
             case model.page of
                 RegisterPage registerModel ->
-                    ( { model | errorMessage = Nothing }, Api.register registerModel )
+                    ( { model | errorMessage = Nothing }, Api.register model.apiBase registerModel )
 
                 _ ->
                     ( model, Cmd.none )
@@ -388,7 +391,7 @@ update msg model =
         SubmitCreateData ->
             case ( model.page, model.token ) of
                 ( MyDataPage myDataModel, Just token ) ->
-                    ( model, Api.createDataEntry token myDataModel.createForm )
+                    ( model, Api.createDataEntry model.apiBase token myDataModel.createForm )
 
                 _ ->
                     ( model, Cmd.none )
@@ -432,7 +435,7 @@ update msg model =
         DeleteEntry key ->
             case model.token of
                 Just token ->
-                    ( model, Api.deleteDataEntry token key )
+                    ( model, Api.deleteDataEntry model.apiBase token key )
 
                 Nothing ->
                     ( model, Cmd.none )
@@ -442,7 +445,7 @@ update msg model =
                 Ok _ ->
                     case ( model.page, model.token ) of
                         ( MyDataPage _, Just token ) ->
-                            ( model, Api.fetchMyEntries token )
+                            ( model, Api.fetchMyEntries model.apiBase token )
 
                         _ ->
                             ( model, Cmd.none )
@@ -453,7 +456,7 @@ update msg model =
         MakePublic key ->
             case model.token of
                 Just token ->
-                    ( model, Api.assignToPublicGroup token key )
+                    ( model, Api.assignToPublicGroup model.apiBase token key )
 
                 Nothing ->
                     ( model, Cmd.none )
@@ -461,7 +464,7 @@ update msg model =
         MakePrivate key ->
             case model.token of
                 Just token ->
-                    ( model, Api.removeFromPublicGroup token key )
+                    ( model, Api.removeFromPublicGroup model.apiBase token key )
 
                 Nothing ->
                     ( model, Cmd.none )
@@ -471,7 +474,7 @@ update msg model =
                 Ok _ ->
                     case ( model.page, model.token ) of
                         ( MyDataPage _, Just token ) ->
-                            ( { model | errorMessage = Nothing }, Api.fetchMyEntries token )
+                            ( { model | errorMessage = Nothing }, Api.fetchMyEntries model.apiBase token )
 
                         _ ->
                             ( model, Cmd.none )
@@ -489,10 +492,10 @@ update msg model =
                                 ( { model | page = PublicPage { publicModel | expandedEntry = Nothing } }, Cmd.none )
 
                             else
-                                ( model, Api.fetchPublicEntryValue key )
+                                ( model, Api.fetchPublicEntryValue model.apiBase key )
 
                         Nothing ->
-                            ( model, Api.fetchPublicEntryValue key )
+                            ( model, Api.fetchPublicEntryValue model.apiBase key )
 
                 MyDataPage myDataModel ->
                     case myDataModel.expandedEntry of
@@ -503,7 +506,7 @@ update msg model =
                             else
                                 case model.token of
                                     Just token ->
-                                        ( model, Api.fetchEntryValue token key )
+                                        ( model, Api.fetchEntryValue model.apiBase token key )
 
                                     Nothing ->
                                         ( model, Cmd.none )
@@ -511,7 +514,7 @@ update msg model =
                         Nothing ->
                             case model.token of
                                 Just token ->
-                                    ( model, Api.fetchEntryValue token key )
+                                    ( model, Api.fetchEntryValue model.apiBase token key )
 
                                 Nothing ->
                                     ( model, Cmd.none )
@@ -534,7 +537,7 @@ update msg model =
                             if View.Table.isBinaryType entry.dataType then
                                 case model.token of
                                     Just token ->
-                                        fetchBlob { url = "/api/data/" ++ entry.key ++ "/blob", token = token }
+                                        fetchBlob { url = model.apiBase ++ "/api/data/" ++ entry.key ++ "/blob", token = token }
 
                                     Nothing ->
                                         Cmd.none
@@ -547,7 +550,7 @@ update msg model =
                             let
                                 publicBlobUrl =
                                     if View.Table.isBinaryType entry.dataType then
-                                        Just ("/api/public/" ++ entry.key ++ "/blob")
+                                        Just (model.apiBase ++ "/api/public/" ++ entry.key ++ "/blob")
 
                                     else
                                         Nothing
@@ -604,7 +607,7 @@ update msg model =
             if success then
                 case ( model.page, model.token ) of
                     ( MyDataPage _, Just token ) ->
-                        ( model, Api.fetchMyEntries token )
+                        ( model, Api.fetchMyEntries model.apiBase token )
 
                     _ ->
                         ( model, Cmd.none )

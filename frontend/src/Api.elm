@@ -6,11 +6,6 @@ import Json.Encode as E
 import Types exposing (..)
 
 
-apiBase : String
-apiBase =
-    ""
-
-
 
 -- DECODERS
 
@@ -96,8 +91,8 @@ authHeader token =
 -- HTTP REQUESTS
 
 
-login : LoginModel -> Cmd Msg
-login loginModel =
+login : String -> LoginModel -> Cmd Msg
+login apiBase loginModel =
     Http.post
         { url = apiBase ++ "/api/auth/login"
         , body = Http.jsonBody (encodeLogin loginModel)
@@ -105,8 +100,8 @@ login loginModel =
         }
 
 
-register : RegisterModel -> Cmd Msg
-register registerModel =
+register : String -> RegisterModel -> Cmd Msg
+register apiBase registerModel =
     Http.post
         { url = apiBase ++ "/api/auth/register"
         , body = Http.jsonBody (encodeRegister registerModel)
@@ -114,8 +109,8 @@ register registerModel =
         }
 
 
-fetchPublicEntries : Maybe String -> Maybe String -> Cmd Msg
-fetchPublicEntries maybeSearch maybeSort =
+fetchPublicEntries : String -> Maybe String -> Maybe String -> Cmd Msg
+fetchPublicEntries apiBase maybeSearch maybeSort =
     let
         searchParam =
             case maybeSearch of
@@ -155,8 +150,8 @@ fetchPublicEntries maybeSearch maybeSort =
         }
 
 
-fetchMyEntries : String -> Cmd Msg
-fetchMyEntries token =
+fetchMyEntries : String -> String -> Cmd Msg
+fetchMyEntries apiBase token =
     Http.request
         { method = "GET"
         , headers = [ authHeader token ]
@@ -168,8 +163,8 @@ fetchMyEntries token =
         }
 
 
-createDataEntry : String -> CreateDataForm -> Cmd Msg
-createDataEntry token form =
+createDataEntry : String -> String -> CreateDataForm -> Cmd Msg
+createDataEntry apiBase token form =
     Http.request
         { method = "POST"
         , headers = [ authHeader token ]
@@ -181,8 +176,8 @@ createDataEntry token form =
         }
 
 
-deleteDataEntry : String -> String -> Cmd Msg
-deleteDataEntry token key =
+deleteDataEntry : String -> String -> String -> Cmd Msg
+deleteDataEntry apiBase token key =
     Http.request
         { method = "DELETE"
         , headers = [ authHeader token ]
@@ -194,8 +189,8 @@ deleteDataEntry token key =
         }
 
 
-assignToPublicGroup : String -> String -> Cmd Msg
-assignToPublicGroup token key =
+assignToPublicGroup : String -> String -> String -> Cmd Msg
+assignToPublicGroup apiBase token key =
     Http.request
         { method = "PUT"
         , headers = [ authHeader token ]
@@ -207,8 +202,8 @@ assignToPublicGroup token key =
         }
 
 
-removeFromPublicGroup : String -> String -> Cmd Msg
-removeFromPublicGroup token key =
+removeFromPublicGroup : String -> String -> String -> Cmd Msg
+removeFromPublicGroup apiBase token key =
     Http.request
         { method = "PUT"
         , headers = [ authHeader token ]
@@ -220,8 +215,8 @@ removeFromPublicGroup token key =
         }
 
 
-fetchGroups : String -> Cmd Msg
-fetchGroups token =
+fetchGroups : String -> String -> Cmd Msg
+fetchGroups apiBase token =
     Http.request
         { method = "GET"
         , headers = [ authHeader token ]
@@ -233,16 +228,16 @@ fetchGroups token =
         }
 
 
-fetchPublicEntryValue : String -> Cmd Msg
-fetchPublicEntryValue key =
+fetchPublicEntryValue : String -> String -> Cmd Msg
+fetchPublicEntryValue apiBase key =
     Http.get
         { url = apiBase ++ "/api/public/" ++ key
         , expect = Http.expectJson GotEntryValue decodeExpandedEntry
         }
 
 
-fetchEntryValue : String -> String -> Cmd Msg
-fetchEntryValue token key =
+fetchEntryValue : String -> String -> String -> Cmd Msg
+fetchEntryValue apiBase token key =
     Http.request
         { method = "GET"
         , headers = [ authHeader token ]

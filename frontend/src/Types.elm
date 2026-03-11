@@ -12,6 +12,7 @@ type alias Model =
     , page : Page
     , token : Maybe String
     , errorMessage : Maybe String
+    , apiBase : String
     }
 
 
