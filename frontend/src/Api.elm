@@ -8,7 +8,7 @@ import Types exposing (..)
 
 apiBase : String
 apiBase =
-    "http://localhost:3000"
+    ""
 
 
 

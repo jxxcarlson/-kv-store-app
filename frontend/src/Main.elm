@@ -534,7 +534,7 @@ update msg model =
                             if View.Table.isBinaryType entry.dataType then
                                 case model.token of
                                     Just token ->
-                                        fetchBlob { url = "http://localhost:3000/api/data/" ++ entry.key ++ "/blob", token = token }
+                                        fetchBlob { url = "/api/data/" ++ entry.key ++ "/blob", token = token }
 
                                     Nothing ->
                                         Cmd.none
@@ -547,7 +547,7 @@ update msg model =
                             let
                                 publicBlobUrl =
                                     if View.Table.isBinaryType entry.dataType then
-                                        Just ("http://localhost:3000/api/public/" ++ entry.key ++ "/blob")
+                                        Just ("/api/public/" ++ entry.key ++ "/blob")
 
                                     else
                                         Nothing
