@@ -120,7 +120,9 @@ contentTypeFor :: Text -> Text
 contentTypeFor dt = case dt of
   "pdf" -> "application/pdf"
   "jpg" -> "image/jpeg"
+  "jpeg" -> "image/jpeg"
   "png" -> "image/png"
+  "webp" -> "image/webp"
   "mp3" -> "audio/mpeg"
   _     -> "application/octet-stream"
 

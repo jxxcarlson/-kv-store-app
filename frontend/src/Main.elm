@@ -400,7 +400,7 @@ update msg model =
                         MyDataPage myDataModel ->
                             let
                                 uploadCmd =
-                                    if List.member newEntry.dataType [ "pdf", "jpg", "png", "mp3" ] then
+                                    if List.member newEntry.dataType [ "pdf", "jpg", "jpeg", "png", "webp", "mp3" ] then
                                         case model.token of
                                             Just token ->
                                                 uploadBlob { key = newEntry.key, token = token }

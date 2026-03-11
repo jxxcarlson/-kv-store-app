@@ -106,7 +106,7 @@ hasRenderedView dataType =
 
 isBinaryType : String -> Bool
 isBinaryType dt =
-    List.member dt [ "pdf", "jpg", "png", "mp3" ]
+    List.member dt [ "pdf", "jpg", "jpeg", "png", "webp", "mp3" ]
 
 
 displayModeToggle : String -> DisplayMode -> Html Msg
@@ -136,7 +136,10 @@ display dataType mode content maybeBlobUrl =
             case maybeBlobUrl of
                 Just url ->
                     div [ class "content-display rendered-content iframe-content" ]
-                        [ iframe [ src url, style "width" "100%", style "height" "calc(100vh - 280px)", style "border" "none" ] [] ]
+                        [ div [ style "margin-bottom" "4px" ]
+                            [ a [ href url, target "_blank", class "btn btn-small" ] [ text "expand" ] ]
+                        , iframe [ src url, style "width" "100%", style "height" "calc(100vh - 280px)", style "border" "none" ] []
+                        ]
 
                 Nothing ->
                     div [ class "content-display" ] [ text "Loading..." ]
@@ -151,6 +154,24 @@ display dataType mode content maybeBlobUrl =
                     div [ class "content-display" ] [ text "Loading..." ]
 
         ( "png", _ ) ->
+            case maybeBlobUrl of
+                Just url ->
+                    div [ class "content-display rendered-content" ]
+                        [ img [ src url, style "max-width" "100%" ] [] ]
+
+                Nothing ->
+                    div [ class "content-display" ] [ text "Loading..." ]
+
+        ( "jpeg", _ ) ->
+            case maybeBlobUrl of
+                Just url ->
+                    div [ class "content-display rendered-content" ]
+                        [ img [ src url, style "max-width" "100%" ] [] ]
+
+                Nothing ->
+                    div [ class "content-display" ] [ text "Loading..." ]
+
+        ( "webp", _ ) ->
             case maybeBlobUrl of
                 Just url ->
                     div [ class "content-display rendered-content" ]

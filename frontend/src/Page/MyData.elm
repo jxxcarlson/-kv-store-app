@@ -79,6 +79,8 @@ viewCreateForm form =
                 , option [ value "pdf" ] [ text "pdf" ]
                 , option [ value "jpg" ] [ text "jpg" ]
                 , option [ value "png" ] [ text "png" ]
+                , option [ value "jpeg" ] [ text "jpeg" ]
+                , option [ value "webp" ] [ text "webp" ]
                 , option [ value "mp3" ] [ text "mp3" ]
                 ]
             ]
@@ -102,7 +104,7 @@ viewCreateForm form =
                 ]
                 []
             ]
-        , if List.member form.dataType [ "pdf", "jpg", "png", "mp3" ] then
+        , if List.member form.dataType [ "pdf", "jpg", "jpeg", "png", "webp", "mp3" ] then
             div [ class "form-group" ]
                 [ label [] [ text "File" ]
                 , input [ type_ "file", id "blob-file-input" ] []
